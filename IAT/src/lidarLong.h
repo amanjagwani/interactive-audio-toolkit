@@ -6,7 +6,7 @@
 #include "TFMini.h"
 #include "input.h"
 
-class LidarLong_t : public Input_t
+class LidarLong : public Input
 {
 private:
     HardwareSerial lidarSerial;
@@ -16,8 +16,8 @@ private:
     gpio_num_t TX_PIN;
 
 public:
-    LidarLong_t(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Input_t(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), lidarSerial(2) {}
+    LidarLong(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
+        : Input(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), lidarSerial(2) {}
 
     void begin()
     {

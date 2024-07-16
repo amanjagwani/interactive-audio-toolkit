@@ -7,7 +7,7 @@
 #include <FS.h>
 #include "LittleFS.h"
 
-class Input_t
+class Input
 {
 protected:
     const char *id;
@@ -27,7 +27,7 @@ protected:
     }
 
 public:
-    Input_t(const char *idNum, unsigned long updatePeriod) : id(idNum), reading(0), lastUpdate(0), updateInterval(updatePeriod), isEnabled(false), min(0), max(10000) {}
+    Input(const char *idNum, unsigned long updatePeriod) : id(idNum), reading(0), lastUpdate(0), updateInterval(updatePeriod), isEnabled(false), min(0), max(10000) {}
 
     virtual void read() = 0;
 

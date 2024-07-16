@@ -4,12 +4,12 @@
 #include "Arduino.h"
 #include "input.h"
 
-class Adc_t : public Input_t
+class Adc : public Input
 {
     const gpio_num_t pin;
 
 public:
-    Adc_t(const gpio_num_t pinNum, const char *idNum, unsigned long updatePeriod) : Input_t(idNum, updatePeriod), pin(pinNum)
+    Adc(const gpio_num_t pinNum, const char *idNum, unsigned long updatePeriod) : Input(idNum, updatePeriod), pin(pinNum)
     {
         pinMode(pinNum, INPUT);
     };

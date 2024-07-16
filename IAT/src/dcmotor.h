@@ -5,7 +5,7 @@
 #include <driver/ledc.h>
 #include "utils.h"
 
-class DCMotor_t : public Output_t
+class DCMotor : public Output
 {
     const int channel;
     const int initFreq;
@@ -15,8 +15,8 @@ class DCMotor_t : public Output_t
     gpio_num_t MOTOR_PWM_PIN;
 
 public:
-    DCMotor_t(SequencerConfig_t *defaultConfig, gpio_num_t pin)
-        : Output_t(120, 4, defaultConfig), initFreq(5000), channel(0), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
+    DCMotor(gpio_num_t pin)
+        : Output(120, 4), initFreq(5000), channel(0), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
     {
         ledcSetup(channel, initFreq, resolution);
         ledcAttachPin(MOTOR_PWM_PIN, channel);
@@ -29,7 +29,7 @@ public:
             return;
         }
         seqTrig = getSubDivTrig(click);
-        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->sequencerActive);
+        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
 
         if (gate)
         {

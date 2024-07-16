@@ -8,8 +8,9 @@
 #include <SD.h>
 #include "input.h"
 
-struct SequencerConfig_t
+class SequencerConfig
 {
+private:
     uint16_t pitches[32];
     float velocities[32];
     float probability;
@@ -17,16 +18,15 @@ struct SequencerConfig_t
     uint8_t subDiv;
     uint32_t threshold;
     uint32_t sensorValue;
-    uint8_t sensorInput;
     uint8_t mode;
-    uint8_t output;
     uint16_t runTime;
     int maxValue;
     int minValue;
     int thresholdRange;
-    bool isWithinRange = false;
-    unsigned long sequencerStartTime = 0;
-    bool animationEnable;
+    bool isWithinRange;
+    bool thresMode;
+    unsigned long sequencerStartTime;
+    Input *input;
 
     bool sequencerActive;
     bool manualActivation;
@@ -34,12 +34,11 @@ struct SequencerConfig_t
     const String seqId;
     const String configPath = "/seqConfig.json";
 
-    Input_t *input;
-
-    SequencerConfig_t(const String &id)
-        : seqId(id), numSteps(16), subDiv(4), threshold(1000), sensorInput(0), mode(0),
-          output(0), sensorValue(0), runTime(10), sequencerActive(false), trigEnable(false), probability(100), maxValue(0), animationEnable(false),
-          input(nullptr)
+public:
+    SequencerConfig(const String &id, Input *sensor, bool thresholdMode)
+        : seqId(id), numSteps(16), subDiv(4), threshold(1000), input(sensor), mode(0),
+          sensorValue(0), runTime(10), sequencerActive(false), trigEnable(false), probability(100), maxValue(0),
+          minValue(0), thresholdRange(0), isWithinRange(false), thresMode(thresholdMode), sequencerStartTime(0), manualActivation(false)
     {
         for (int i = 0; i < 32; ++i)
         {
@@ -48,11 +47,106 @@ struct SequencerConfig_t
         }
     }
 
-    void setSensorVal(Input_t *sensor)
+    uint16_t getPitch(int index) const { return pitches[index]; }
+    float getVelocity(int index) const { return velocities[index]; }
+    float getProbability() const { return probability; }
+    int getNumSteps() const { return numSteps; }
+    uint8_t getSubDiv() const { return subDiv; }
+    uint32_t getThreshold() const { return threshold; }
+    uint32_t getSensorValue() const { return sensorValue; }
+    uint8_t getMode() const { return mode; }
+    uint16_t getRunTime() const { return runTime; }
+    int getMaxValue() const { return maxValue; }
+    int getMinValue() const { return minValue; }
+    int getThresholdRange() const { return thresholdRange; }
+    bool getIsWithinRange() const { return isWithinRange; }
+    bool getThresMode() const { return thresMode; }
+    unsigned long getSequencerStartTime() const { return sequencerStartTime; }
+    Input *getInput() const { return input; }
+    bool getSequencerActive() const { return sequencerActive; }
+    bool getManualActivation() const { return manualActivation; }
+    bool getTrigEnable() const { return trigEnable; }
+    String getSeqId() const { return seqId; }
+
+    void setPitch(int index, uint16_t value)
     {
-        sensorValue = sensor->getReading();
-        maxValue = sensor->getMax();
-        minValue = sensor->getMin();
+        if (index >= 0 && index < 32)
+        {
+            pitches[index] = value;
+        }
+    }
+    void setVelocity(int index, float value)
+    {
+        if (index >= 0 && index < 32 && value >= 0.0 && value <= 1.0)
+        {
+            velocities[index] = value;
+        }
+    }
+    void setProbability(float value)
+    {
+        if (value >= 0.0 && value <= 100.0)
+        {
+            probability = value;
+        }
+    }
+    void setNumSteps(int value)
+    {
+        if (value > 0 && value < 33)
+        {
+            numSteps = value;
+        }
+    }
+    void setSubDiv(uint8_t value)
+    {
+        if (value > 0 && value <= 64)
+        {
+            subDiv = value;
+        }
+    }
+    void setThreshold(uint32_t value)
+    {
+        threshold = value;
+    }
+
+    void setThresholdRange(uint32_t value)
+    {
+        thresholdRange = value;
+    }
+
+    void setMode(uint8_t value)
+    {
+        if (value > 0 && value < 3)
+            mode = value;
+    }
+
+    void setRunTime(uint16_t value)
+    {
+        runTime = value;
+    }
+
+    void setThresMode(bool value)
+    {
+        thresMode = value;
+    }
+
+    void setSequencerActive(bool value)
+    {
+        sequencerActive = value;
+    }
+    void setManualActivation(bool value)
+    {
+        manualActivation = value;
+    }
+    void setTrigEnable(bool value)
+    {
+        trigEnable = value;
+    }
+
+    void setSensorVal()
+    {
+        sensorValue = input->getReading();
+        maxValue = input->getMax();
+        minValue = input->getMin();
     }
 
     String getConfigFileName(const String &seqId)
@@ -63,18 +157,18 @@ struct SequencerConfig_t
     void setTrigger()
     {
         unsigned long currentTime = millis();
-        if (sensorInput == 4 || sensorInput == 5) // if loadcells then triggers when above thresholds.
+        if (thresMode) // if threshold mode is 1 then triggers when above threshold.
         {
             if (thresholdRange > 10)
             {
-                isWithinRange = sensorValue >= minValue && sensorValue < 300 && sensorValue <= threshold + thresholdRange && sensorValue > threshold;
+                isWithinRange = sensorValue >= minValue && sensorValue <= threshold + thresholdRange && sensorValue > threshold;
             }
             else if (thresholdRange < 10)
             {
                 isWithinRange = sensorValue >= minValue && sensorValue > threshold;
             }
         }
-        else // if other sensors then triggers when under thresholds.
+        else // if threshold mode is 0 then triggers when under thresholds.
         {
             if (thresholdRange > 10)
             {
@@ -91,6 +185,7 @@ struct SequencerConfig_t
         }
         if (trigEnable)
         {
+
             if (isWithinRange && !sequencerActive)
             {
                 sequencerActive = true;
@@ -137,7 +232,6 @@ struct SequencerConfig_t
         doc["threshold"] = threshold;
         doc["trigEnable"] = trigEnable;
         doc["subDiv"] = subDiv;
-        doc["sensorInput"] = sensorInput;
         doc["mode"] = mode;
         doc["numSteps"] = numSteps;
         doc["maxVal"] = maxValue;
@@ -183,7 +277,6 @@ struct SequencerConfig_t
             threshold = doc["threshold"] | threshold;
             trigEnable = doc["trigEnable"] | trigEnable;
             subDiv = doc["subDiv"] | subDiv;
-            sensorInput = doc["sensorInput"] | sensorInput;
             mode = doc["mode"] | mode;
             numSteps = doc["numSteps"] | numSteps;
             maxValue = doc["maxVal"] | maxValue;

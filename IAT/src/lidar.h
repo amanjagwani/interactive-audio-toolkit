@@ -5,7 +5,7 @@
 #include "Wire.h"
 #include "input.h"
 
-class Lidar_t : public Input_t
+class Lidar : public Input
 {
 public:
     enum class Mode
@@ -21,8 +21,8 @@ private:
     const gpio_num_t I2C_SCL;
 
 public:
-    Lidar_t(gpio_num_t SDAPin, gpio_num_t SCLPin, unsigned long updatePeriod, const char *idNum)
-        : Input_t(idNum, updatePeriod), mode(Mode::LONG), I2C_SDA(SDAPin), I2C_SCL(SCLPin) {}
+    Lidar(gpio_num_t SDAPin, gpio_num_t SCLPin, unsigned long updatePeriod, const char *idNum)
+        : Input(idNum, updatePeriod), mode(Mode::LONG), I2C_SDA(SDAPin), I2C_SCL(SCLPin) {}
 
     void begin()
     {

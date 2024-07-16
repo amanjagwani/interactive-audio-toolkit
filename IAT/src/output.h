@@ -7,12 +7,11 @@
 #include "utils.h"
 #include "sequencerConfig.h"
 
-class Output_t
+class Output
 {
-public:
+protected:
     Sequencer sequencer;
-    SequencerConfig_t *seqConfig;
-    SequencerConfig_t *defConfig;
+    SequencerConfig *seqConfig;
     uint16_t bpm;
     float noteDuration;
     bool seqTrig;
@@ -21,29 +20,27 @@ public:
     String configPath = "/config.json";
 
 public:
-    Output_t(uint16_t defaultBpm, uint8_t defaultSubDiv, SequencerConfig_t *defaultConfig) : bpm(defaultBpm),
-                                                                                             sequencer(120),
-                                                                                             counter(0), defConfig(defaultConfig),
-                                                                                             seqConfig(defaultConfig)
+    Output(uint16_t defaultBpm, uint8_t defaultSubDiv) : bpm(defaultBpm),
+                                                         sequencer(defaultBpm),
+                                                         counter(0),
+                                                         seqConfig(nullptr)
     {
     }
 
-    void setSeqConfig(SequencerConfig_t *config)
+    void setSeqConfig(SequencerConfig *config)
     {
         if (config != nullptr)
         {
             seqConfig = config;
             for (int i = 0; i < 32; i++)
             {
-                sequencer.setPitch(i, seqConfig->pitches[i]);
-                sequencer.setVelocity(i, seqConfig->velocities[i]);
+                sequencer.setPitch(i, seqConfig->getPitch(i));
+                sequencer.setVelocity(i, seqConfig->getVelocity(i));
             }
-        }
-    }
 
-    void resetConfig()
-    {
-        setSeqConfig(defConfig);
+            sequencer.setMode(seqConfig->getMode());
+            sequencer.setSteps(seqConfig->getNumSteps());
+        }
     }
 
     void setMode(int mode)
@@ -66,7 +63,7 @@ public:
         sequencer.setVelocity(index, value);
     }
 
-    SequencerConfig_t *getSeqConfig()
+    SequencerConfig *getSeqConfig()
     {
         return seqConfig;
     }
@@ -75,9 +72,9 @@ public:
     {
         bpm = globBpm;
         float bpmAtSubDiv;
-        if (seqConfig && seqConfig->subDiv >= 1)
+        if (seqConfig && seqConfig->getSubDiv() >= 1)
         {
-            bpmAtSubDiv = bpm / seqConfig->subDiv;
+            bpmAtSubDiv = bpm / seqConfig->getSubDiv();
         }
         else
         {
@@ -92,14 +89,14 @@ public:
         if (!seqConfig)
             return false;
 
-        if (seqConfig->subDiv == 1)
+        if (seqConfig->getSubDiv() == 1)
         {
             seqTrig = click;
         }
         else if (click)
         {
             counter = (counter + 1) % 128;
-            seqTrig = (click && counter % seqConfig->subDiv == 0);
+            seqTrig = (click && counter % seqConfig->getSubDiv() == 0);
         }
         else
         {
@@ -113,7 +110,7 @@ public:
         return sequencer.getStep();
     }
 
-    virtual ~Output_t(){};
+    virtual ~Output(){};
 };
 
 #endif

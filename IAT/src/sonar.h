@@ -3,17 +3,15 @@
 
 #include "HardwareSerial.h"
 #include "config.h"
-#ifndef SONAR_T_H
-#define SONAR_T_H
 
 #include "HardwareSerial.h"
-#include "Input_t.h"
+#include "input.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include "LittleFS.h"
 #include "SD.h"
 
-class Sonar_t : public Input_t
+class Sonar : public Input
 {
 private:
     HardwareSerial sonarSerial;
@@ -21,8 +19,8 @@ private:
     gpio_num_t TX_PIN;
 
 public:
-    Sonar_t(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Input_t(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), sonarSerial(2) {}
+    Sonar(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
+        : Input(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), sonarSerial(2) {}
 
     void begin()
     {
@@ -56,7 +54,5 @@ public:
         }
     }
 };
-
-#endif // SONAR_T_H
 
 #endif

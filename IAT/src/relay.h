@@ -4,7 +4,7 @@
 #include "output.h"
 #include "utils.h"
 
-class Relay_t : public Output_t
+class Relay : public Output
 {
     float freq;
     unsigned long duration;
@@ -14,7 +14,7 @@ class Relay_t : public Output_t
     int relayState;
 
 public:
-    Relay_t(SequencerConfig_t *defaultConfig, const gpio_num_t pin) : Output_t(120, 4, defaultConfig), relayState(LOW), lastSwitch(0), relayPin(pin), stepDivider(1), freq(10), duration(1)
+    Relay(const gpio_num_t pin) : Output(120, 4), relayState(LOW), lastSwitch(0), relayPin(pin), stepDivider(1), freq(10), duration(1)
     {
         pinMode(relayPin, OUTPUT);
     }
@@ -26,7 +26,7 @@ public:
             return;
         }
         seqTrig = getSubDivTrig(click);
-        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->sequencerActive);
+        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
         unsigned long currentTime = micros();
 
         if (gate && sequencer.getCurrentPitch() > 0)

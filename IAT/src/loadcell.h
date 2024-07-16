@@ -5,7 +5,7 @@
 #include "Q2HX711.h"
 #include "input.h"
 
-class LoadCell_t : public Input_t
+class LoadCell : public Input
 {
 private:
     Q2HX711 hx711;
@@ -13,8 +13,8 @@ private:
     uint32_t tareValue;
 
 public:
-    LoadCell_t(gpio_num_t doutPin, gpio_num_t sckPin, const char *idNum, unsigned long updatePeriod)
-        : Input_t(idNum, updatePeriod), tareValue(0), hx711(doutPin, sckPin) {}
+    LoadCell(gpio_num_t doutPin, gpio_num_t sckPin, const char *idNum, unsigned long updatePeriod)
+        : Input(idNum, updatePeriod), tareValue(0), hx711(doutPin, sckPin) {}
 
     void tare()
     {

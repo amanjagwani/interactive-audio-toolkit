@@ -12,7 +12,7 @@ class Oscillator
     float m_freq;
     double m_amp;
     double m_incr;
-    static inline double m_table[WAVETABLE_SIZE] = {0.0};
+    static double m_table[WAVETABLE_SIZE];
     double m_out[AUDIO_BUFFER_SIZE];
     bool m_isSine;
 
@@ -71,5 +71,7 @@ public:
         return m_out;
     }
 };
+
+double Oscillator::m_table[WAVETABLE_SIZE] = {0.0};
 
 #endif

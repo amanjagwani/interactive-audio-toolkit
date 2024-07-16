@@ -5,49 +5,40 @@
 #include "output.h"
 #include <SD.h>
 
-class OutputHandler_t
+class OutputHandler
 {
-    SequencerConfig_t *seqConfig;
-    Output_t *output;
+    SequencerConfig *seqConfig;
+    Output *output;
     int lastStep;
     const String configPath = "/seqConfig.json";
     unsigned long lastRenderTime = 0;
     const unsigned long renderInterval = 2000;
-
-public:
-    int8_t outputType;
     uint8_t randVal;
 
+public:
     const String seqId;
 
-    OutputHandler_t(const String &id, SequencerConfig_t *config) : seqId(id), randVal(60), seqConfig(config), output(nullptr), lastStep(0), outputType(-1){};
-
-    void setMode()
+    OutputHandler(const String &id, Output *out, SequencerConfig *config) : seqId(id), randVal(60), seqConfig(config), output(out), lastStep(0)
     {
         if (output != nullptr && seqConfig != nullptr)
         {
-            output->setMode(seqConfig->mode);
+            output->setSeqConfig(seqConfig);
         }
     }
 
-    void setSteps()
-    {
-        if (output != nullptr && seqConfig != nullptr)
-        {
-            output->setSteps(seqConfig->numSteps);
-        }
-    }
     void enableOutputTriggering()
     {
-        bool isWithinRange;
+        bool isWithinRange = false;
         if (seqConfig != nullptr)
         {
-            if (seqConfig->sensorInput == 4 || seqConfig->sensorInput == 5)
+            if (seqConfig->getThresMode())
             {
-                isWithinRange = seqConfig->sensorValue >= seqConfig->minValue && seqConfig->sensorValue <= seqConfig->threshold + seqConfig->thresholdRange && seqConfig->sensorValue > seqConfig->threshold;
+                isWithinRange = seqConfig->getSensorValue() >= seqConfig->getMinValue() && seqConfig->getSensorValue() <= seqConfig->getThreshold() + seqConfig->getThresholdRange() && seqConfig->getSensorValue() > seqConfig->getThreshold();
             }
             else
-                isWithinRange = seqConfig->sensorValue >= seqConfig->minValue && seqConfig->sensorValue >= seqConfig->threshold - seqConfig->thresholdRange && seqConfig->sensorValue < seqConfig->threshold;
+            {
+                isWithinRange = seqConfig->getSensorValue() >= seqConfig->getMinValue() && seqConfig->getSensorValue() >= seqConfig->getThreshold() - seqConfig->getThresholdRange() && seqConfig->getSensorValue() < seqConfig->getThreshold();
+            }
 
             if (output != nullptr)
             {
@@ -59,13 +50,13 @@ public:
         }
     }
 
-    void setOutput(Output_t *newOut)
+    void setProbWeight(uint8_t value)
     {
-        if (output != nullptr)
-        {
-            output->resetConfig();
-        }
+        randVal = value;
+    }
 
+    void setOutput(Output *newOut)
+    {
         output = newOut;
         if (output != nullptr && seqConfig != nullptr)
         {
@@ -79,14 +70,14 @@ public:
         {
             int currentStep = output->getStep();
 
-            if (currentStep == seqConfig->numSteps - 1)
+            if (currentStep == seqConfig->getNumSteps() - 1)
             {
-                if (seqConfig->probability < 100)
+                if (seqConfig->getProbability() < 100)
                 {
-                    for (int i = 0; i < seqConfig->numSteps; i++)
+                    for (int i = 0; i < seqConfig->getNumSteps(); i++)
                     {
                         int rand = random(0, randVal);
-                        if (rand > seqConfig->probability)
+                        if (rand > seqConfig->getProbability())
                         {
                             output->setPitch(i, 0);
                             output->setVelocity(i, 0);
@@ -112,8 +103,8 @@ public:
         {
             for (int i = 0; i < 32; i++)
             {
-                output->setPitch(i, seqConfig->pitches[i]);
-                output->setVelocity(i, seqConfig->velocities[i]);
+                output->setPitch(i, seqConfig->getPitch(i));
+                output->setVelocity(i, seqConfig->getVelocity(i));
             }
         }
     }
@@ -125,27 +116,6 @@ public:
             return 0;
         }
         return output->getStep();
-    }
-
-    void sendCurrentStep(std::function<void(const String &, int)> sendIntToClient,
-                         std::function<void(const String &, bool)> sendBoolToClient)
-    {
-        if (output != nullptr && seqConfig != nullptr)
-        {
-            if (seqConfig->animationEnable)
-            {
-                if (seqConfig->sequencerActive)
-                {
-                    int thisStep = output->getStep();
-                    if (thisStep != lastStep)
-                    {
-                        sendIntToClient(seqConfig->seqId + "CurrentStep", thisStep);
-                        sendBoolToClient(seqConfig->seqId + "IsPlaying", seqConfig->sequencerActive);
-                        lastStep = thisStep;
-                    }
-                }
-            }
-        }
     }
 
     String getHandlerConfigFileName(const String &seqId)
@@ -171,7 +141,6 @@ public:
         }
         else
         {
-            outputType = doc["outputType"] | outputType;
             randVal = doc["randVal"] | randVal;
         }
         configFile.close();
@@ -189,7 +158,6 @@ public:
 
         StaticJsonDocument<256> doc;
 
-        doc["outputType"] = outputType;
         doc["randVal"] = randVal;
 
         if (serializeJson(doc, configFile) == 0)
@@ -202,9 +170,8 @@ public:
 
     void init()
     {
-        setSteps();
-        setMode();
         setStepVals();
     }
 };
+
 #endif

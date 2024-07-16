@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>
 #include "utils.h"
 
-class FmSynth_t : public Output_t
+class FmSynth : public Output
 {
   Oscillator carrier;
   Oscillator modulator;
@@ -26,8 +26,8 @@ class FmSynth_t : public Output_t
   const char *id;
 
 public:
-  FmSynth_t(SequencerConfig_t *defaultConfig, const char *idNum)
-      : Output_t(120, 4, defaultConfig), carrier(0.1, 440),
+  FmSynth(const char *idNum)
+      : Output(120, 4), carrier(0.1, 440),
         modulator(0.1, 440),
         carAdsr(1),
         modAdsr(1),
@@ -51,7 +51,7 @@ public:
     }
     seqTrig = getSubDivTrig(click);
 
-    bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->sequencerActive);
+    bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
     freq = midiNoteToFrequency(sequencer.getCurrentPitch()) + 0.5;
     if (freq < 4.0)
     {
@@ -62,6 +62,32 @@ public:
 
     return carrier.process(carAdsr.process(gate, velocity), level, freq,
                            modulator.process(modAdsr.process(gate, 1), modVal, freq * modRatio));
+  }
+
+  void setModIndex(float index)
+  {
+    if (index > 0 && index < 40)
+    {
+      modIndex = index;
+    }
+  }
+
+  void setModRatio(float ratio)
+  {
+    if (ratio > 0)
+    {
+      modRatio = ratio;
+    }
+  }
+
+  void setCarEnv(float atk, float dec, float sus, float rel)
+  {
+    carAdsr.setParams(atk, dec, sus, rel);
+  }
+
+  void setModEnv(float atk, float dec, float sus, float rel)
+  {
+    modAdsr.setParams(atk, dec, sus, rel);
   }
 
   void saveConfigSD()
@@ -128,7 +154,7 @@ public:
 
   void loadConfigSD()
   {
-    File configFile = SD.open((char *)synthConfigPath.c_str(), FILE_READ);
+    File configFile = SD.open("/outputConfig.json", FILE_READ);
     if (!configFile)
     {
       Serial.println("Failed to open SD config file for reading: FM Synth");
@@ -164,7 +190,7 @@ public:
 
   void loadConfigFS()
   {
-    File configFile = LittleFS.open((char *)synthConfigPath.c_str(), FILE_READ);
+    File configFile = LittleFS.open("/outputConfig.json", FILE_READ);
     if (!configFile)
     {
       Serial.println("Failed to open FS config file for reading: FM Synth");
