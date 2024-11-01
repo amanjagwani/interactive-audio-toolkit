@@ -48,4 +48,4 @@ public:
     }
 };
 
-#endif // LOADCELL_T_H
+#endif

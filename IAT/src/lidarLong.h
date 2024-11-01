@@ -59,4 +59,4 @@ public:
     }
 };
 
-#endif // LIDAR_LONG_T_H
+#endif

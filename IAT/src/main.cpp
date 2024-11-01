@@ -82,7 +82,6 @@ void setup()
 
 void loop()
 {
-
   // read sensor values
   sensor.read();
   uint16_t sensorReading = sensor.getReading();
