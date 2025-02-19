@@ -23,11 +23,10 @@ class FmSynth : public Output
   float modRatio;
   float level;
   float velocity;
-  const char *id;
 
 public:
   FmSynth(const char *idNum)
-      : Output(120, 4), carrier(0.1, 440),
+      : Output(120, 4, idNum), carrier(0.1, 440),
         modulator(0.1, 440),
         carAdsr(1),
         modAdsr(1),
@@ -35,8 +34,7 @@ public:
         modIndex(0),
         modRatio(1),
         level(0.5f),
-        velocity(0.5f),
-        id(idNum)
+        velocity(0.5f)
   {
     carrier.initWaveTable();
     carAdsr.setParams(0.2 * noteDuration, 0.2 * noteDuration, 0.7, 0.2 * noteDuration);

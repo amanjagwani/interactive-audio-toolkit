@@ -13,39 +13,63 @@ class OutputHandler
     const String configPath = "/seqConfig.json";
     unsigned long lastRenderTime = 0;
     const unsigned long renderInterval = 2000;
-    uint8_t randVal;
+    bool stepValsSet = false;
 
 public:
+    int8_t outputType;
+    uint8_t randVal;
+
     const String seqId;
 
-    OutputHandler(const String &id, Output *out, SequencerConfig *config) : seqId(id), randVal(60), seqConfig(config), output(out), lastStep(0)
+    OutputHandler(const String &id) : seqId(id), randVal(60), seqConfig(nullptr), output(nullptr), lastStep(0), outputType(-1) {};
+
+    void init(SequencerConfig *config)
+    {
+        seqConfig = config;
+        setSteps();
+        setMode();
+        setStepVals();
+    }
+
+    void setMode()
     {
         if (output != nullptr && seqConfig != nullptr)
         {
-            output->setSeqConfig(seqConfig);
+            output->setMode(seqConfig->getMode());
+        }
+    }
+
+    void setSteps()
+    {
+        if (output != nullptr && seqConfig != nullptr)
+        {
+            output->setSteps(seqConfig->getNumSteps());
         }
     }
 
     void enableOutputTriggering()
     {
-        bool isWithinRange = false;
-        if (seqConfig != nullptr)
+        if (seqConfig == nullptr || output == nullptr)
         {
-            if (seqConfig->getThresMode())
-            {
-                isWithinRange = seqConfig->getSensorValue() >= seqConfig->getMinValue() && seqConfig->getSensorValue() <= seqConfig->getThreshold() + seqConfig->getThresholdRange() && seqConfig->getSensorValue() > seqConfig->getThreshold();
-            }
-            else
-            {
-                isWithinRange = seqConfig->getSensorValue() >= seqConfig->getMinValue() && seqConfig->getSensorValue() >= seqConfig->getThreshold() - seqConfig->getThresholdRange() && seqConfig->getSensorValue() < seqConfig->getThreshold();
-            }
+            return;
+        }
 
-            if (output != nullptr)
+        if (!seqConfig->getTrigEnable() && seqConfig->getManualActivation())
+        {
+            output->setSeqConfig(seqConfig);
+            return;
+        }
+
+        if (seqConfig->getTrigEnable())
+        {
+            if (seqConfig->currentActivation != nullptr &&
+                (output->seqConfig == nullptr ||
+                 output->seqConfig->currentActivation == nullptr ||
+                 seqConfig->currentActivation->priorityLevel > output->seqConfig->currentActivation->priorityLevel))
             {
-                if (isWithinRange)
-                {
-                    output->setSeqConfig(seqConfig);
-                }
+
+                output->setSeqConfig(seqConfig);
+                return;
             }
         }
     }
@@ -68,25 +92,30 @@ public:
     {
         if (seqConfig != nullptr && output != nullptr)
         {
-            int currentStep = output->getStep();
-
-            if (currentStep == seqConfig->getNumSteps() - 1)
+            if (seqConfig->getTrigEnable())
             {
-                if (seqConfig->getProbability() < 100)
+                int currentStep = output->getStep();
+
+                if (currentStep == seqConfig->getNumSteps() - 1)
                 {
-                    for (int i = 0; i < seqConfig->getNumSteps(); i++)
+                    if (seqConfig->getProbability() < 100)
                     {
-                        int rand = random(0, randVal);
-                        if (rand > seqConfig->getProbability())
+                        for (int i = 0; i < seqConfig->getNumSteps(); i++)
                         {
-                            output->setPitch(i, 0);
-                            output->setVelocity(i, 0);
+                            int rand = random(0, randVal);
+                            if (rand > seqConfig->getProbability())
+                            {
+                                output->setPitch(i, 0);
+                                output->setVelocity(i, 0);
+                            }
                         }
+                        stepValsSet = false;
                     }
                 }
-                else
+                if (seqConfig->getProbability() == 100 && stepValsSet != true)
                 {
                     setStepVals();
+                    stepValsSet = true;
                 }
             }
         }
@@ -104,6 +133,38 @@ public:
             for (int i = 0; i < 32; i++)
             {
                 output->setPitch(i, seqConfig->getPitch(i));
+                output->setVelocity(i, seqConfig->getVelocity(i));
+            }
+        }
+    }
+
+    void setPitches()
+    {
+        if (!output || !seqConfig)
+        {
+            Serial.println("output or seqConfig is null");
+            return;
+        }
+        else
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                output->setPitch(i, seqConfig->getPitch(i));
+            }
+        }
+    }
+
+    void setVelocities()
+    {
+        if (!output || !seqConfig)
+        {
+            Serial.println("output or seqConfig is null");
+            return;
+        }
+        else
+        {
+            for (int i = 0; i < 32; i++)
+            {
                 output->setVelocity(i, seqConfig->getVelocity(i));
             }
         }
@@ -141,6 +202,7 @@ public:
         }
         else
         {
+            outputType = doc["outputType"] | outputType;
             randVal = doc["randVal"] | randVal;
         }
         configFile.close();
@@ -158,6 +220,7 @@ public:
 
         StaticJsonDocument<256> doc;
 
+        doc["outputType"] = outputType;
         doc["randVal"] = randVal;
 
         if (serializeJson(doc, configFile) == 0)
@@ -166,11 +229,6 @@ public:
         }
 
         configFile.close();
-    }
-
-    void init()
-    {
-        setStepVals();
     }
 };
 

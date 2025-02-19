@@ -16,5 +16,4 @@ inline float scale(float value, float inMin, float inMax, float outMin, float ou
     value = value > inMax ? inMax : value;
     return (value - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
 }
-
 #endif

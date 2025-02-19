@@ -15,8 +15,8 @@ class DCMotor : public Output
     gpio_num_t MOTOR_PWM_PIN;
 
 public:
-    DCMotor(gpio_num_t pin)
-        : Output(120, 4), initFreq(5000), channel(0), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
+    DCMotor(gpio_num_t pin, const char *id)
+        : Output(120, 4, id), initFreq(5000), channel(0), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
     {
         ledcSetup(channel, initFreq, resolution);
         ledcAttachPin(MOTOR_PWM_PIN, channel);

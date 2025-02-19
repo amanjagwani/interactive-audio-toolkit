@@ -1,20 +1,21 @@
 #ifndef LDR_H
 #define LDR_H
+#include "sensor.h"
 
 #include "Arduino.h"
-#include "input.h"
 
-class Adc : public Input
+struct Adc : public Sensor
 {
     const gpio_num_t pin;
+    unsigned long lastUpdate;
+    const String configPath = "/miscConfig.json";
 
-public:
-    Adc(const gpio_num_t pinNum, const char *idNum, unsigned long updatePeriod) : Input(idNum, updatePeriod), pin(pinNum)
+    Adc(const gpio_num_t pinNum, const char *idNum, unsigned long updatePeriod) : Sensor(updatePeriod, idNum, false), pin(pinNum), lastUpdate(0)
     {
         pinMode(pinNum, INPUT);
     };
 
-    void read() override
+    void read()
     {
         if (isEnabled)
         {
@@ -23,10 +24,8 @@ public:
             {
                 lastUpdate = currentTime;
                 reading = analogRead(pin);
-                reading = clamp(reading, min, max);
-
 #ifdef SENSOR_VAL_PRINT
-                Serial.println("Adc" + String(id) + ": " + String(reading));
+                Serial.println("Adc" + String(sensorId) + ": " + String(reading));
 #endif
             }
         }
@@ -45,10 +44,8 @@ public:
                 if (pulseDuration > 0)
                 {
                     reading = pulseDuration;
-                    reading = clamp(reading, min, max);
-
 #ifdef SENSOR_VAL_PRINT
-                    Serial.println("Adc" + String(id) + ": " + String(reading));
+                    Serial.println("Adc" + String(sensorId) + ": " + String(reading));
 #endif
                 }
             }

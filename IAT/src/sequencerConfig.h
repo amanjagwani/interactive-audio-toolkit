@@ -6,7 +6,16 @@
 #include <LittleFs.h>
 #include <ArduinoJson.h>
 #include <SD.h>
-#include "input.h"
+#include <SPI.h>
+#include <atomic>
+
+struct ActivationConfig
+{
+    std::atomic<bool> isActive{false};
+    int8_t priorityLevel{0};
+    unsigned long startTime;
+    float probability;
+};
 
 class SequencerConfig
 {
@@ -17,29 +26,43 @@ private:
     int numSteps;
     uint8_t subDiv;
     uint32_t threshold;
-    uint32_t sensorValue;
+    uint16_t *sensorValue;
     uint8_t mode;
+    uint8_t output;
     uint16_t runTime;
-    int maxValue;
-    int minValue;
+    int *maxValue;
+    int *minValue;
     int thresholdRange;
-    bool isWithinRange;
+    bool isWithinRange = false;
     bool thresMode;
-    unsigned long sequencerStartTime;
-    Input *input;
+    unsigned long sequencerStartTime = 0;
 
-    bool sequencerActive;
-    bool manualActivation;
+    std::atomic<bool> sequencerActive;
+    std::atomic<bool> manualActivation;
+    std::atomic<bool> cooldown;
+    ActivationConfig sensorActivation;
+    ActivationConfig globalActivation;
     bool trigEnable;
+    bool isLoadCell;
     const String seqId;
     const String configPath = "/seqConfig.json";
 
 public:
-    SequencerConfig(const String &id, Input *sensor, bool thresholdMode)
-        : seqId(id), numSteps(16), subDiv(4), threshold(1000), input(sensor), mode(0),
-          sensorValue(0), runTime(10), sequencerActive(false), trigEnable(false), probability(100), maxValue(0),
-          minValue(0), thresholdRange(0), isWithinRange(false), thresMode(thresholdMode), sequencerStartTime(0), manualActivation(false)
+    ActivationConfig *currentActivation;
+
+    SequencerConfig(const String &id)
+        : seqId(id), numSteps(16), subDiv(4), threshold(1000), mode(0),
+          output(0), sensorValue(0), runTime(10), sequencerActive(false), trigEnable(false), probability(100), maxValue(0), currentActivation(nullptr), cooldown(false),
+          isLoadCell(false)
     {
+    }
+
+    void init(bool loadCell, uint16_t *sensorReading, int *min, int *max)
+    {
+        sensorValue = sensorReading;
+        minValue = min;
+        maxValue = max;
+        isLoadCell = loadCell;
         for (int i = 0; i < 32; ++i)
         {
             pitches[i] = 40;
@@ -53,20 +76,22 @@ public:
     int getNumSteps() const { return numSteps; }
     uint8_t getSubDiv() const { return subDiv; }
     uint32_t getThreshold() const { return threshold; }
-    uint32_t getSensorValue() const { return sensorValue; }
     uint8_t getMode() const { return mode; }
     uint16_t getRunTime() const { return runTime; }
-    int getMaxValue() const { return maxValue; }
-    int getMinValue() const { return minValue; }
     int getThresholdRange() const { return thresholdRange; }
     bool getIsWithinRange() const { return isWithinRange; }
     bool getThresMode() const { return thresMode; }
     unsigned long getSequencerStartTime() const { return sequencerStartTime; }
-    Input *getInput() const { return input; }
     bool getSequencerActive() const { return sequencerActive; }
     bool getManualActivation() const { return manualActivation; }
     bool getTrigEnable() const { return trigEnable; }
+    int8_t getPriorityLevel() const { return sensorActivation.priorityLevel; };
     String getSeqId() const { return seqId; }
+
+    void setPriorityLevel(int8_t priority)
+    {
+        sensorActivation.priorityLevel = priority;
+    }
 
     void setPitch(int index, uint16_t value)
     {
@@ -142,77 +167,116 @@ public:
         trigEnable = value;
     }
 
-    void setSensorVal()
-    {
-        sensorValue = input->getReading();
-        maxValue = input->getMax();
-        minValue = input->getMin();
-    }
-
     String getConfigFileName(const String &seqId)
     {
         return "/seqConfig" + seqId + ".json";
     }
 
-    void setTrigger()
+    void processSensorActivation()
     {
-        unsigned long currentTime = millis();
-        if (thresMode) // if threshold mode is 1 then triggers when above threshold.
+        if (cooldown.load())
+        {
+            sensorActivation.isActive = false;
+            return;
+        }
+        if (isLoadCell) // if loadcells then triggers when above thresholds.
         {
             if (thresholdRange > 10)
             {
-                isWithinRange = sensorValue >= minValue && sensorValue <= threshold + thresholdRange && sensorValue > threshold;
+                isWithinRange = *sensorValue >= *minValue && *sensorValue < *maxValue && *sensorValue <= threshold + thresholdRange && *sensorValue > threshold;
             }
             else if (thresholdRange < 10)
             {
-                isWithinRange = sensorValue >= minValue && sensorValue > threshold;
+                isWithinRange = *sensorValue >= *minValue && *sensorValue > threshold;
             }
         }
-        else // if threshold mode is 0 then triggers when under thresholds.
+        else // if other sensors then triggers when under thresholds.
         {
             if (thresholdRange > 10)
             {
-                isWithinRange = sensorValue >= minValue && sensorValue >= threshold - thresholdRange && sensorValue < threshold;
+                isWithinRange = *sensorValue >= *minValue && *sensorValue >= threshold - thresholdRange && *sensorValue < threshold;
             }
             else if (thresholdRange < 10)
             {
-                isWithinRange = sensorValue >= minValue && sensorValue < threshold;
+                isWithinRange = *sensorValue >= *minValue && *sensorValue < threshold;
             }
-        }
-        if (manualActivation)
-        {
-            probability = 100;
         }
         if (trigEnable)
         {
+            bool prevSensorActivation = sensorActivation.isActive.load();
 
-            if (isWithinRange && !sequencerActive)
+            unsigned long currentTime = millis();
+
+            if (isWithinRange && !sensorActivation.isActive)
             {
-                sequencerActive = true;
-                sequencerStartTime = currentTime;
-                probability = 100;
-                manualActivation = false;
+                sensorActivation.isActive = true;
+                sensorActivation.startTime = currentTime;
+                sensorActivation.probability = 100;
             }
 
-            if (sequencerActive && !isWithinRange)
+            if (sensorActivation.isActive && !isWithinRange)
             {
-                unsigned long elapsedTime = currentTime - sequencerStartTime;
+                unsigned long elapsedTime = currentTime - sensorActivation.startTime;
 
                 if (elapsedTime < runTime * 1000)
                 {
                     float decrementStep = (100.0 / (runTime * 1000)) * elapsedTime;
-                    probability = 100 - decrementStep;
-
-                    if (probability < 0)
-                    {
-                        probability = 0;
-                    }
+                    sensorActivation.probability = std::max(100 - decrementStep, 0.0f);
                 }
                 else
                 {
-                    sequencerActive = false;
+                    sensorActivation.isActive = false;
+                    sensorActivation.startTime = 0;
                 }
             }
+        }
+    }
+
+    void setTrigger()
+
+    {
+        if (trigEnable)
+        {
+
+            processSensorActivation();
+
+            if (sensorActivation.isActive && globalActivation.isActive)
+            {
+                if (sensorActivation.priorityLevel >= globalActivation.priorityLevel)
+                {
+                    sequencerActive.store(sensorActivation.isActive.load());
+                    currentActivation = &sensorActivation;
+                }
+                else
+                {
+                    sequencerActive.store(globalActivation.isActive.load());
+                    currentActivation = &globalActivation;
+                }
+                probability = currentActivation->probability;
+            }
+            else if (sensorActivation.isActive)
+            {
+                sequencerActive.store(sensorActivation.isActive.load());
+                currentActivation = &sensorActivation;
+                probability = sensorActivation.probability;
+            }
+            else if (globalActivation.isActive)
+            {
+                sequencerActive.store(globalActivation.isActive.load());
+                currentActivation = &globalActivation;
+                probability = globalActivation.probability;
+            }
+            else
+            {
+                sequencerActive.store(false);
+                probability = 100;
+                currentActivation = nullptr;
+            }
+        }
+        else
+        {
+            sequencerActive.store(manualActivation.load());
+            probability = 100;
         }
     }
 
@@ -234,9 +298,9 @@ public:
         doc["subDiv"] = subDiv;
         doc["mode"] = mode;
         doc["numSteps"] = numSteps;
-        doc["maxVal"] = maxValue;
-        doc["minVal"] = minValue;
         doc["thresholdRange"] = thresholdRange;
+        doc["isLoadCell"] = isLoadCell;
+        doc["sensorTrigPriority"] = sensorActivation.priorityLevel;
 
         JsonArray jpitches = doc.createNestedArray("pitches");
         JsonArray jvelocities = doc.createNestedArray("velocities");
@@ -279,9 +343,9 @@ public:
             subDiv = doc["subDiv"] | subDiv;
             mode = doc["mode"] | mode;
             numSteps = doc["numSteps"] | numSteps;
-            maxValue = doc["maxVal"] | maxValue;
-            minValue = doc["minVal"] | minValue;
             thresholdRange = doc["thresholdRange"] | thresholdRange;
+            isLoadCell = doc["isLoadCell"] | isLoadCell;
+            sensorActivation.priorityLevel = doc["sensorTrigPriority"] | sensorActivation.priorityLevel;
             JsonArray jPitches = doc["pitches"];
             JsonArray jVelocities = doc["velocities"];
             for (size_t i = 0; i < jPitches.size(); i++)

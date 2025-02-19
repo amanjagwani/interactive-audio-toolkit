@@ -5,22 +5,21 @@
 #include "config.h"
 
 #include "HardwareSerial.h"
-#include "input.h"
+#include "sensor.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include "LittleFS.h"
 #include "SD.h"
 
-class Sonar : public Input
+struct Sonar : public Sensor
 {
-private:
     HardwareSerial sonarSerial;
     gpio_num_t RX_PIN;
     gpio_num_t TX_PIN;
+    unsigned long lastUpdate;
 
-public:
     Sonar(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Input(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), sonarSerial(2) {}
+        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), sonarSerial(2) {}
 
     void begin()
     {

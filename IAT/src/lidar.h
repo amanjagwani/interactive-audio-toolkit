@@ -1,44 +1,44 @@
-#ifndef LIDAR_T_H
-#define LIDAR_T_H
+#ifndef LIDAR_H
+#define LIDAR_H
 
 #include "SparkFun_VL53L1X.h"
+#include "config.h"
 #include "Wire.h"
-#include "input.h"
+#include "sensor.h"
 
-class Lidar : public Input
+struct Lidar : public Sensor
 {
-public:
+
     enum class Mode
     {
         SHORT,
         LONG
     };
 
-private:
     SFEVL53L1X distanceSensor;
     Mode mode;
-    const gpio_num_t I2C_SDA;
-    const gpio_num_t I2C_SCL;
+    const String configPath = "/miscConfig.json";
+    bool isConnected;
+    gpio_num_t I2C_SDA, I2C_SCL;
 
-public:
-    Lidar(gpio_num_t SDAPin, gpio_num_t SCLPin, unsigned long updatePeriod, const char *idNum)
-        : Input(idNum, updatePeriod), mode(Mode::LONG), I2C_SDA(SDAPin), I2C_SCL(SCLPin) {}
+    Lidar(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false), mode(Mode::LONG) {};
 
-    void begin()
+    int begin()
     {
         Wire.begin(I2C_SDA, I2C_SCL);
         if (distanceSensor.begin() != 0)
         {
             Serial.println("LIDAR Sensor failed to begin.");
+            isConnected = false;
+            return 1;
         }
-        else
-        {
-            mode = static_cast<Mode>(distanceSensor.getDistanceMode());
-            Serial.println("LIDAR Sensor Initialized!");
-            Serial.println(String("LIDAR mode: ") + (mode == Mode::LONG ? "long" : "short"));
-            distanceSensor.setIntermeasurementPeriod(updateInterval);
-            distanceSensor.startRanging();
-        }
+        mode == Mode(distanceSensor.getDistanceMode());
+        Serial.println("LIDAR Sensor Initialized!");
+        Serial.println(String("LIDAR mode: ") + (mode == Mode::LONG ? "long" : "short"));
+        distanceSensor.setIntermeasurementPeriod(updateInterval);
+        distanceSensor.startRanging();
+        isConnected = true;
+        return 0;
     }
 
     void setMode(Mode newMode)
@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void read() override
+    void read()
     {
         if (isEnabled)
         {
@@ -64,7 +64,6 @@ public:
             {
                 reading = distanceSensor.getDistance();
                 distanceSensor.clearInterrupt();
-                reading = clamp(reading, min, max);
 #ifdef SENSOR_VAL_PRINT
                 Serial.print("Distance(mm): ");
                 Serial.println(reading);
@@ -72,6 +71,26 @@ public:
             }
         }
     }
+
+    template <typename SendFunction>
+    void readAndSend(SendFunction sendFunction)
+    {
+        if (isEnabled)
+        {
+            if (distanceSensor.checkForDataReady())
+            {
+                reading = distanceSensor.getDistance();
+                distanceSensor.clearInterrupt();
+#ifdef SENSOR_VAL_PRINT
+                Serial.print("LIDAR Distance(mm): ");
+                Serial.println(reading);
+
+#endif
+
+                sendFunction("lidar", reading);
+            }
+        }
+    }
 };
 
-#endif 
+#endif

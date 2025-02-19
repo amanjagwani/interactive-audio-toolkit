@@ -14,7 +14,7 @@ class Relay : public Output
     int relayState;
 
 public:
-    Relay(const gpio_num_t pin) : Output(120, 4), relayState(LOW), lastSwitch(0), relayPin(pin), stepDivider(1), freq(10), duration(1)
+    Relay(const gpio_num_t pin, const char *id) : Output(120, 4, id), relayState(LOW), lastSwitch(0), relayPin(pin), stepDivider(1), freq(10), duration(1)
     {
         pinMode(relayPin, OUTPUT);
     }

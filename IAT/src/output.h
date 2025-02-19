@@ -11,21 +11,24 @@ class Output
 {
 protected:
     Sequencer sequencer;
-    SequencerConfig *seqConfig;
     uint16_t bpm;
     float noteDuration;
     bool seqTrig;
     unsigned long sequencerStartTime = 0;
     uint16_t counter;
     String configPath = "/config.json";
+    const char *id;
 
 public:
-    Output(uint16_t defaultBpm, uint8_t defaultSubDiv) : bpm(defaultBpm),
-                                                         sequencer(defaultBpm),
-                                                         counter(0),
-                                                         seqConfig(nullptr)
+    SequencerConfig *seqConfig;
+    Output(uint16_t defaultBpm, uint8_t defaultSubDiv, const char *idNum) : bpm(defaultBpm),
+                                                                            sequencer(defaultBpm),
+                                                                            counter(0),
+                                                                            seqConfig(nullptr), id(idNum)
     {
     }
+
+    const char *getId() const { return id; }
 
     void setSeqConfig(SequencerConfig *config)
     {
@@ -110,7 +113,7 @@ public:
         return sequencer.getStep();
     }
 
-    virtual ~Output(){};
+    virtual ~Output() {};
 };
 
 #endif

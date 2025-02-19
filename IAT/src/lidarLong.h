@@ -4,9 +4,9 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include "TFMini.h"
-#include "input.h"
+#include "sensor.h"
 
-class LidarLong : public Input
+class LidarLong : public Sensor
 {
 private:
     HardwareSerial lidarSerial;
@@ -17,7 +17,7 @@ private:
 
 public:
     LidarLong(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Input(idNum, updatePeriod), RX_PIN(RX), TX_PIN(TX), lidarSerial(2) {}
+        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), lidarSerial(2) {}
 
     void begin()
     {

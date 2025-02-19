@@ -6,29 +6,40 @@
 #include "outputHandler.h"
 #include "lidar.h"
 #include "i2sSetup.h"
+#include "controlHandler.h"
+#include "stepper.h"
 
 const gpio_num_t SENSOR_PIN = GPIO_NUM_36;
+const gpio_num_t STEPPER_STEP_PIN = GPIO_NUM_14;
+const gpio_num_t STEPPER_DIR_PIN = GPIO_NUM_15;
 const int BPM = 120;
 
 Adc sensor(SENSOR_PIN, "sensor1", 200);
 Lidar lidar(GPIO_NUM_21, GPIO_NUM_27, 100, "lidar1");
 Metro metro(BPM);
 FmSynth synth("synth1");
+Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, "stepper1");
+Sensor *sensors[] = {&sensor, &lidar};
+const size_t sensorCount = sizeof(sensors) / sizeof(sensors[0]);
+Output *outputs[] = {&synth, &stepper};
+const size_t outputCount = sizeof(outputs) / sizeof(outputs[0]);
 
-SequencerConfig sensorConfigLow("sensor-low", &sensor, 1);
-OutputHandler sensorHandlerLow("sensor-low", &synth, &sensorConfigLow);
-
-SequencerConfig lidarConfigLow("lidar-low", &sensor, 1);
-OutputHandler lidarHandlerLow("lidar-low", &synth, &lidarConfigLow);
+SequencerConfig &sensorConfigLow = sensor.lowSeq;
+SequencerConfig &lidarConfigLow = lidar.lowSeq;
+OutputHandler &sensorHandlerLow = sensor.lowHandler;
+OutputHandler &lidarHandlerLow = lidar.lowHandler;
 
 void setup()
 {
   Serial.begin(115200);
   lidar.begin();
-  lidar.setIsEnabled(true);
-  sensor.setIsEnabled(true);
+  lidar.isEnabled = true;
+  sensor.isEnabled = true;
   i2sSetup();
   metro.start();
+  initSensors(sensors, sensorCount);
+  initOutputs(outputs, outputCount);
+  setupAllControlHandlers();
 
   int stepCount = 8;
 
@@ -49,6 +60,7 @@ void setup()
   sensorConfigLow.setThresMode(1);
   sensorConfigLow.setThreshold(1000);
   sensorConfigLow.setThresholdRange(500);
+  sensorConfigLow.setPriorityLevel(2);
 
   // Set sequencer parameters for Lidar sensor low threshold
   lidarConfigLow.setNumSteps(stepCount);
@@ -59,6 +71,7 @@ void setup()
   lidarConfigLow.setThresMode(1);
   lidarConfigLow.setThreshold(1000);
   lidarConfigLow.setThresholdRange(500);
+  sensorConfigLow.setPriorityLevel(4);
 
   // Set sequencer step values
   for (int i = 0; i < stepCount; i++)
@@ -70,6 +83,8 @@ void setup()
   }
 
   // Initialise output handlers for dynamic output triggering
+  sensorHandlerLow.setOutput(&synth);
+  lidarHandlerLow.setOutput(&synth);
   sensorHandlerLow.setProbWeight(75); // sets sequencer trail off decay contour
   lidarHandlerLow.setProbWeight(60);  // sets sequencer trail off decay contour
 
@@ -107,11 +122,9 @@ void loop()
   Serial.println(synth.getSeqConfig()->getSequencerActive());
 
   // Enable dynamic troggering of sequencer from sensor thresholds
-  sensorConfigLow.setSensorVal();
   sensorConfigLow.setTrigger();
   sensorHandlerLow.enableOutputTriggering();
   sensorHandlerLow.renderStepProbability();
-  lidarConfigLow.setSensorVal();
   lidarConfigLow.setTrigger();
   lidarHandlerLow.enableOutputTriggering();
   lidarHandlerLow.renderStepProbability();
