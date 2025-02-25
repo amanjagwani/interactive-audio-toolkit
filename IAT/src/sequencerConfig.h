@@ -47,6 +47,17 @@ private:
     const String seqId;
     const String configPath = "/seqConfig.json";
 
+    static const int MAX_TRIGGER_TIMESTAMPS = 60;
+    unsigned long triggerTimestamps[MAX_TRIGGER_TIMESTAMPS];
+    int triggerTimestampCount = 0;
+    float triggerRate = 0.0;
+    uint32_t triggerRateHighThreshold = 10;
+    unsigned long triggerCooldownInterval = 5000;
+    unsigned long triggerInactivityThreshold = 10000;
+    bool autoPlay = false;
+    unsigned long autoPlayStartTimestamp = 0;
+    unsigned long lastActiveTimestamp = 0;
+
 public:
     ActivationConfig *currentActivation;
 
@@ -232,13 +243,55 @@ public:
         }
     }
 
+    void addTriggerTimestamp()
+    {
+        if (triggerTimestampCount < MAX_TRIGGER_TIMESTAMPS)
+        {
+            triggerTimestamps[triggerTimestampCount++] = millis();
+        }
+    }
+
+    void processTriggerRate()
+    {
+        unsigned long currentTime = millis();
+        const unsigned long windowSize = 60000;
+        int newCount = 0;
+        for (int i = 0; i < triggerTimestampCount; i++)
+        {
+            triggerTimestamps[newCount++] = triggerTimestamps[i];
+        }
+        triggerTimestampCount = newCount;
+        triggerRate = (float)triggerTimestampCount;
+        if (triggerRate >= triggerRateHighThreshold && !cooldown.load())
+        {
+            cooldown.store(true);
+            lastActiveTimestamp = currentTime;
+            triggerTimestampCount = 0;
+        }
+        if (cooldown.load() && currentTime - lastActiveTimestamp >= triggerCooldownInterval)
+        {
+            cooldown.store(false);
+        }
+        if (!autoPlay && currentTime - lastActiveTimestamp >= triggerInactivityThreshold)
+        {
+            autoPlay = true;
+            autoPlayStartTimestamp = currentTime;
+        }
+        if (autoPlay && currentTime - autoPlayStartTimestamp >= runTime * 1000)
+        {
+            autoPlay = false;
+            lastActiveTimestamp = currentTime;
+        }
+    }
+
     void setTrigger()
 
     {
         if (trigEnable)
         {
-
             processSensorActivation();
+            addTriggerTimestamp();
+            processTriggerRate();
 
             if (sensorActivation.isActive && globalActivation.isActive)
             {
