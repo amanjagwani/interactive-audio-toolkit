@@ -1,13 +1,13 @@
 #include <Arduino.h>
-#include "adc.h"
-#include "metro.h"
-#include "fmsynth.h"
-#include "sequencerConfig.h"
-#include "outputHandler.h"
-#include "lidar.h"
-#include "i2sSetup.h"
-#include "controlHandler.h"
-#include "stepper.h"
+#include <iat/adc.h>
+#include <iat/metro.h>
+#include <iat/fmsynth.h>
+#include <iat/sequencerConfig.h>
+#include <iat/outputHandler.h>
+#include <iat/lidar.h>
+#include <iat/i2sSetup.h>
+#include <iat/controlHandler.h>
+#include <iat/stepper.h>
 
 const gpio_num_t SENSOR_PIN = GPIO_NUM_36;
 const gpio_num_t STEPPER_STEP_PIN = GPIO_NUM_14;

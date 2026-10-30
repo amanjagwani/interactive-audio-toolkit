@@ -2,7 +2,7 @@
 #define OUTPUT_H
 
 #include <ArduinoJson.h>
-#include <sequencer.h>
+#include "sequencer.h"
 #include <atomic>
 #include "utils.h"
 #include "sequencerConfig.h"
