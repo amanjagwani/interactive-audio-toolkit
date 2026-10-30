@@ -5,6 +5,9 @@
 #include <FS.h>
 #include <ArduinoJson.h>
 
+namespace iat
+{
+
 class Metro
 {
     unsigned long lastClick;
@@ -109,5 +112,7 @@ public:
         configFile.close();
     }
 };
+
+}
 
 #endif

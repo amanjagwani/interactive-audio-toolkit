@@ -6,6 +6,9 @@
 #include "TFMini.h"
 #include "sensor.h"
 
+namespace iat
+{
+
 class LidarLong : public Sensor
 {
 private:
@@ -59,5 +62,7 @@ public:
         return strength;
     }
 };
+
+}
 
 #endif

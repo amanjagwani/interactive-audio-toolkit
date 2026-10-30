@@ -6,6 +6,9 @@
 #include "sequencerConfig.h"
 #include "outputHandler.h"
 
+namespace iat
+{
+
 struct Sensor
 {
     uint16_t reading;
@@ -100,4 +103,6 @@ struct Sensor
         configFile.close();
     }
 };
+}
+
 #endif

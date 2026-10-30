@@ -5,6 +5,9 @@
 #include "i2sSetup.h"
 #include <Arduino.h>
 
+namespace iat
+{
+
 class Oscillator
 {
 
@@ -71,5 +74,7 @@ public:
         return m_out;
     }
 };
+
+}
 
 #endif

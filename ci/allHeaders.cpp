@@ -1,4 +1,3 @@
-// second TU: compiles every header and catches duplicate definitions at link time
 #include <iat/adc.h>
 #include <iat/adsr.h>
 #include <iat/config.h>
@@ -25,3 +24,5 @@
 #include <iat/sonar.h>
 #include <iat/stepper.h>
 #include <iat/utils.h>
+
+using namespace iat;

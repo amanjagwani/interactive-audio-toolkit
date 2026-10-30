@@ -6,6 +6,9 @@
 #include "Wire.h"
 #include "sensor.h"
 
+namespace iat
+{
+
 struct LidarTFMP : public Sensor
 {
 
@@ -72,5 +75,7 @@ struct LidarTFMP : public Sensor
         }
     }
 };
+
+}
 
 #endif

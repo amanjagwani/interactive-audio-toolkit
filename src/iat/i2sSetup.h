@@ -4,6 +4,9 @@
 #include <driver/i2s_std.h>
 #include "config.h"
 
+namespace iat
+{
+
 inline constexpr gpio_num_t I2S_DIN = static_cast<gpio_num_t>(IAT_I2S_DIN);
 inline constexpr gpio_num_t I2S_LRCK = static_cast<gpio_num_t>(IAT_I2S_LRCK);
 inline constexpr gpio_num_t I2S_BCK = static_cast<gpio_num_t>(IAT_I2S_BCK);
@@ -53,6 +56,8 @@ inline void i2sAudioOut(const double *leftSamples, const double *rightSamples)
     //  Serial.println(intBuffer[1]);
     size_t bytesWritten;
     i2s_channel_write(i2sTx, intBuffer, sizeof(intBuffer), &bytesWritten, portMAX_DELAY);
+}
+
 }
 
 #endif

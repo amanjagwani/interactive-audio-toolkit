@@ -3,6 +3,9 @@
 
 #include "config.h"
 
+namespace iat
+{
+
 class ADSR
 {
 
@@ -122,4 +125,6 @@ public:
         return m_out;
     }
 };
+}
+
 #endif

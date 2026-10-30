@@ -8,6 +8,9 @@
 #include "sensor.h"
 #include <ArduinoJson.h>
 
+namespace iat
+{
+
 struct Sonar : public Sensor
 {
     HardwareSerial sonarSerial;
@@ -50,5 +53,7 @@ struct Sonar : public Sensor
         }
     }
 };
+
+}
 
 #endif

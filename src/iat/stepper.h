@@ -4,6 +4,9 @@
 #include "output.h"
 #include <AccelStepper.h>
 
+namespace iat
+{
+
 class Stepper : public Output
 {
     float freq;
@@ -46,5 +49,7 @@ public:
         }
     }
 };
+
+}
 
 #endif

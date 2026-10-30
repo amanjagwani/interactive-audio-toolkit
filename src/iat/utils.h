@@ -4,6 +4,9 @@
 #include "math.h"
 #include <ArduinoJson.h>
 
+namespace iat
+{
+
 inline float midiNoteToFrequency(int midiNote)
 {
     return pow(2.0, (midiNote - 69) / 12.0) * 440.0;
@@ -15,4 +18,6 @@ inline float scale(float value, float inMin, float inMax, float outMin, float ou
     value = value > inMax ? inMax : value;
     return (value - inMin) / (inMax - inMin) * (outMax - outMin) + outMin;
 }
+}
+
 #endif

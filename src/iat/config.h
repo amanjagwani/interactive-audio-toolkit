@@ -5,6 +5,9 @@
 #include <cstdint>
 #include <sdkconfig.h>
 
+namespace iat
+{
+
 inline constexpr float AUDIO_SR = 48000.0f;
 inline constexpr std::size_t AUDIO_BUFFER_SIZE = 256;
 inline constexpr uint16_t WAVETABLE_SIZE = 1024;
@@ -37,5 +40,7 @@ inline constexpr uint16_t WAVETABLE_SIZE = 1024;
 #endif
 #endif
 static_assert(IAT_I2S_BIT_DEPTH == 16 || IAT_I2S_BIT_DEPTH == 32, "IAT_I2S_BIT_DEPTH must be 16 or 32");
+
+}
 
 #endif

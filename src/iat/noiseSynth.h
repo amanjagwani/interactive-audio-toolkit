@@ -7,6 +7,9 @@
 #include "config.h"
 #include "output.h"
 
+namespace iat
+{
+
 class NoiseSynth : public Output
 {
 private:
@@ -44,5 +47,7 @@ public:
         return outputBuffer;
     }
 };
+
+}
 
 #endif

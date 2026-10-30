@@ -4,6 +4,9 @@
 
 #include "Arduino.h"
 
+namespace iat
+{
+
 struct Adc : public Sensor
 {
     const gpio_num_t pin;
@@ -52,4 +55,6 @@ struct Adc : public Sensor
         }
     }
 };
+}
+
 #endif

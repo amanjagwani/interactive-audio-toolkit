@@ -5,6 +5,9 @@
 #include "HX711_ADC.h"
 #include "sensor.h"
 
+namespace iat
+{
+
 struct LoadCell : public Sensor
 {
     HX711_ADC hx711;
@@ -94,5 +97,7 @@ struct LoadCell : public Sensor
         Serial.println("Tare value cleared.");
     }
 };
+
+}
 
 #endif

@@ -10,6 +10,9 @@
 #include "outputHandler.h"
 #include "output.h"
 
+namespace iat
+{
+
 inline std::map<String, Sensor *> sensorMap;
 
 inline void initSensors(Sensor *sensors[], size_t sensorCount)
@@ -178,6 +181,8 @@ inline void processControlMessage(const String &jsonMessage)
     {
         Serial.println("No control handler for: " + controlName);
     }
+}
+
 }
 
 #endif

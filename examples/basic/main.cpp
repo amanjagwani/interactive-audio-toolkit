@@ -9,6 +9,8 @@
 #include <iat/controlHandler.h>
 #include <iat/stepper.h>
 
+using namespace iat;
+
 const gpio_num_t SENSOR_PIN = GPIO_NUM_36;
 const gpio_num_t STEPPER_STEP_PIN = GPIO_NUM_14;
 const gpio_num_t STEPPER_DIR_PIN = GPIO_NUM_15;

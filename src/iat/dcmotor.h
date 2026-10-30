@@ -5,6 +5,9 @@
 #include <driver/ledc.h>
 #include "utils.h"
 
+namespace iat
+{
+
 class DCMotor : public Output
 {
     const int initFreq;
@@ -47,5 +50,7 @@ public:
         ledcWrite(MOTOR_PWM_PIN, 0);
     }
 };
+
+}
 
 #endif

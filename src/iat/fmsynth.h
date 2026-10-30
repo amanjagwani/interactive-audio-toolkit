@@ -11,6 +11,9 @@
 #include <ArduinoJson.h>
 #include "utils.h"
 
+namespace iat
+{
+
 class FmSynth : public Output
 {
   Oscillator carrier;
@@ -153,5 +156,7 @@ public:
     configFile.close();
   }
 };
+
+}
 
 #endif

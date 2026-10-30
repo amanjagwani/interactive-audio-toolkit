@@ -5,6 +5,9 @@
 #include <cmath>
 #include "config.h"
 
+namespace iat
+{
+
 class Reson
 {
 private:
@@ -57,5 +60,7 @@ public:
         y[0] = y[1] = 0.0f;
     }
 };
+
+}
 
 #endif

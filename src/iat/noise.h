@@ -4,6 +4,9 @@
 #include <Arduino.h>
 #include "config.h"
 
+namespace iat
+{
+
 class Noise
 {
 private:
@@ -33,5 +36,7 @@ public:
         return out;
     }
 };
+
+}
 
 #endif

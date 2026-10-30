@@ -7,6 +7,9 @@
 #include "utils.h"
 #include "sequencerConfig.h"
 
+namespace iat
+{
+
 class Output
 {
 protected:
@@ -115,5 +118,7 @@ public:
 
     virtual ~Output() {};
 };
+
+}
 
 #endif

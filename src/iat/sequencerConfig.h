@@ -6,6 +6,9 @@
 #include <ArduinoJson.h>
 #include <atomic>
 
+namespace iat
+{
+
 struct ActivationConfig
 {
     std::atomic<bool> isActive{false};
@@ -407,5 +410,7 @@ public:
         configFile.close();
     }
 };
+
+}
 
 #endif

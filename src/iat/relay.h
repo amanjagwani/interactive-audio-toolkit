@@ -4,6 +4,9 @@
 #include "output.h"
 #include "utils.h"
 
+namespace iat
+{
+
 class Relay : public Output
 {
     float freq;
@@ -52,5 +55,7 @@ public:
         }
     }
 };
+
+}
 
 #endif

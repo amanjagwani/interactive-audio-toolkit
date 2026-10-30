@@ -4,6 +4,9 @@
 #include "stdlib.h"
 #include <Arduino.h>
 
+namespace iat
+{
+
 class Sequencer
 {
 
@@ -142,5 +145,7 @@ public:
         return currentStep;
     }
 };
+
+}
 
 #endif

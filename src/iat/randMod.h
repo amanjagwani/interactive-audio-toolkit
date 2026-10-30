@@ -5,6 +5,9 @@
 #include <cstdlib>
 #include "config.h"
 
+namespace iat
+{
+
 class RandMod
 {
 private:
@@ -51,5 +54,7 @@ private:
         stepSize = (targetValue - currentValue) / (sampleRate / updateRate);
     }
 };
+
+}
 
 #endif

@@ -5,6 +5,9 @@
 #include "output.h"
 #include <FS.h>
 
+namespace iat
+{
+
 class OutputHandler
 {
     SequencerConfig *seqConfig;
@@ -231,5 +234,7 @@ public:
         configFile.close();
     }
 };
+
+}
 
 #endif
