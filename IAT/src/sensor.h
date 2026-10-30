@@ -2,6 +2,7 @@
 #define SENSOR_H
 #include "config.h"
 #include <Arduino.h>
+#include <FS.h>
 #include "sequencerConfig.h"
 #include "outputHandler.h"
 
@@ -51,87 +52,39 @@ struct Sensor
         return reading;
     }
 
-    virtual void saveConfigSD()
+    virtual void saveConfig(fs::FS &fs)
     {
-        StaticJsonDocument<1024> doc;
+        JsonDocument doc;
         auto configSection = doc["input"][sensorId];
         configSection["isEnabled"] = isEnabled;
         configSection["maxVal"] = max;
         configSection["minVal"] = min;
         configSection["updateInterval"] = updateInterval;
 
-        File configFile = SD.open("/inputConfig.json", FILE_WRITE);
+        File configFile = fs.open("/inputConfig.json", FILE_WRITE);
         if (!configFile)
         {
-            Serial.println("Failed to open input SD config file for writing");
+            Serial.println("Failed to open input config file for writing");
             return;
         }
 
         if (serializeJson(doc, configFile) == 0)
         {
-            Serial.println("Failed to write input config to SD file");
+            Serial.println("Failed to write input config file");
         }
 
         configFile.close();
     }
 
-    virtual void saveConfigFS()
+    virtual void loadConfig(fs::FS &fs)
     {
-        StaticJsonDocument<1024> doc;
-        auto configSection = doc["input"][sensorId];
-        configSection["isEnabled"] = isEnabled;
-        configSection["maxVal"] = max;
-        configSection["minVal"] = min;
-        configSection["updateInterval"] = updateInterval;
-
-        File configFile = LittleFS.open("/inputConfig.json", FILE_WRITE);
+        File configFile = fs.open("/inputConfig.json", FILE_READ);
         if (!configFile)
         {
-            Serial.println("Failed to open input FS config file for writing");
+            Serial.println("Failed to open input config file for reading");
             return;
         }
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write input config to FS file");
-        }
-
-        configFile.close();
-    }
-
-    virtual void loadConfigSD()
-    {
-        File configFile = SD.open("/inputConfig.json", FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open SD config file for reading");
-            return;
-        }
-        StaticJsonDocument<1024> doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration");
-        }
-        else
-        {
-            auto configSection = doc["input"][sensorId];
-            isEnabled = configSection["isEnabled"] | isEnabled;
-            max = configSection["maxVal"] | max;
-            min = configSection["minVal"] | min;
-        }
-        configFile.close();
-    }
-
-    virtual void loadConfigFS()
-    {
-        File configFile = LittleFS.open("/inputConfig.json", FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open SD config file for reading");
-            return;
-        }
-        StaticJsonDocument<1024> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, configFile);
         if (error)
         {

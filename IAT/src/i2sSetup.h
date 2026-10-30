@@ -1,52 +1,58 @@
 #ifndef I2S_SETUP_H
 #define I2S_SETUP_H
 
-#include <driver/i2s.h>
+#include <driver/i2s_std.h>
 #include "config.h"
 
-const i2s_port_t i2sNum = I2S_NUM_0;
+inline constexpr gpio_num_t I2S_DIN = static_cast<gpio_num_t>(IAT_I2S_DIN);
+inline constexpr gpio_num_t I2S_LRCK = static_cast<gpio_num_t>(IAT_I2S_LRCK);
+inline constexpr gpio_num_t I2S_BCK = static_cast<gpio_num_t>(IAT_I2S_BCK);
 
-// change as required
-const gpio_num_t I2S_DIN = GPIO_NUM_22;
-const gpio_num_t I2S_LRCK = GPIO_NUM_25;
-const gpio_num_t I2S_BCK = GPIO_NUM_26;
+#if IAT_I2S_BIT_DEPTH == 32
+using I2sSample = int32_t;
+inline constexpr i2s_data_bit_width_t I2S_BIT_WIDTH = I2S_DATA_BIT_WIDTH_32BIT;
+#else
+using I2sSample = int16_t;
+inline constexpr i2s_data_bit_width_t I2S_BIT_WIDTH = I2S_DATA_BIT_WIDTH_16BIT;
+#endif
+inline constexpr double I2S_SCALE = 32000.0 / 32768.0 * (1LL << (IAT_I2S_BIT_DEPTH - 1));
 
-const i2s_config_t i2sConfig = {
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    .sample_rate = uint32_t(AUDIO_SR),
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_STAND_I2S),
-    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-    .dma_buf_count = 4,
-    .dma_buf_len = AUDIO_BUFFER_SIZE,
-    .use_apll = 0,
-
-};
-
-const i2s_pin_config_t pinConfig = {
-    .bck_io_num = I2S_BCK,
-    .ws_io_num = I2S_LRCK,
-    .data_out_num = I2S_DIN,
-    .data_in_num = I2S_PIN_NO_CHANGE};
+inline i2s_chan_handle_t i2sTx = nullptr;
 
 inline void i2sSetup()
 {
-    i2s_driver_install(i2sNum, &i2sConfig, 0, NULL);
-    i2s_set_pin(i2sNum, &pinConfig);
+    i2s_chan_config_t chanCfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
+    chanCfg.dma_desc_num = 4;
+    chanCfg.dma_frame_num = AUDIO_BUFFER_SIZE;
+    ESP_ERROR_CHECK(i2s_new_channel(&chanCfg, &i2sTx, nullptr));
+
+    i2s_std_config_t stdCfg = {
+        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(static_cast<uint32_t>(AUDIO_SR)),
+        .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_BIT_WIDTH, I2S_SLOT_MODE_STEREO),
+        .gpio_cfg = {
+            .mclk = I2S_GPIO_UNUSED,
+            .bclk = I2S_BCK,
+            .ws = I2S_LRCK,
+            .dout = I2S_DIN,
+            .din = I2S_GPIO_UNUSED,
+            .invert_flags = {},
+        },
+    };
+    ESP_ERROR_CHECK(i2s_channel_init_std_mode(i2sTx, &stdCfg));
+    ESP_ERROR_CHECK(i2s_channel_enable(i2sTx));
 }
 
 inline void i2sAudioOut(const double *leftSamples, const double *rightSamples)
 {
-    int16_t intBuffer[AUDIO_BUFFER_SIZE * 2];
+    I2sSample intBuffer[AUDIO_BUFFER_SIZE * 2];
     for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
     {
-        intBuffer[i * 2] = (leftSamples ? leftSamples[i] : 0.0) * 32000.0;
-        intBuffer[(i * 2) + 1] = (rightSamples ? rightSamples[i] : 0.0) * 32000.0;
+        intBuffer[i * 2] = (leftSamples ? leftSamples[i] : 0.0) * I2S_SCALE;
+        intBuffer[(i * 2) + 1] = (rightSamples ? rightSamples[i] : 0.0) * I2S_SCALE;
     }
     //  Serial.println(intBuffer[1]);
     size_t bytesWritten;
-    i2s_write(i2sNum, intBuffer, sizeof(intBuffer), &bytesWritten, portMAX_DELAY);
+    i2s_channel_write(i2sTx, intBuffer, sizeof(intBuffer), &bytesWritten, portMAX_DELAY);
 }
 
 #endif

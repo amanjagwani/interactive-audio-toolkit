@@ -7,7 +7,6 @@
 
 class DCMotor : public Output
 {
-    const int channel;
     const int initFreq;
     const int resolution;
     int dutyCycle;
@@ -16,10 +15,9 @@ class DCMotor : public Output
 
 public:
     DCMotor(gpio_num_t pin, const char *id)
-        : Output(120, 4, id), initFreq(5000), channel(0), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
+        : Output(120, 4, id), initFreq(5000), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
     {
-        ledcSetup(channel, initFreq, resolution);
-        ledcAttachPin(MOTOR_PWM_PIN, channel);
+        ledcAttach(MOTOR_PWM_PIN, initFreq, resolution);
     }
 
     void process(bool click)
@@ -33,12 +31,6 @@ public:
 
         if (gate)
         {
-            int pitch = sequencer.getCurrentPitch();
-            if (pitch > 0)
-            {
-                digitalWrite(MOTOR_PWM_PIN, HIGH);
-            }
-
             float velocity = sequencer.getCurrentVelocity();
             dutyCycle = static_cast<int>(scale(velocity, 0.0f, 1.0f, 0, 254));
         }
@@ -46,16 +38,13 @@ public:
         {
             dutyCycle = 0;
             freq = 0;
-            digitalWrite(MOTOR_PWM_PIN, LOW);
         }
-        ledcWrite(channel, dutyCycle);
+        ledcWrite(MOTOR_PWM_PIN, dutyCycle);
     }
 
     void stop()
     {
-        ledcWrite(channel, 0);
-        ledcWriteTone(channel, 0);
-        digitalWrite(MOTOR_PWM_PIN, LOW);
+        ledcWrite(MOTOR_PWM_PIN, 0);
     }
 };
 

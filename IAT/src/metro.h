@@ -1,7 +1,8 @@
 #ifndef METRO_H
 #define METRO_H
 
-#include <SD.h>
+#include <Arduino.h>
+#include <FS.h>
 #include <ArduinoJson.h>
 
 class Metro
@@ -65,36 +66,36 @@ public:
     {
         return isRunning;
     }
-    void saveConfigSD()
+    void saveConfig(fs::FS &fs)
     {
-        StaticJsonDocument<1024> doc;
+        JsonDocument doc;
         auto configSection = doc["metro"];
         configSection["bpm"] = bpm;
 
-        File configFile = SD.open("/metroConfig.json", FILE_WRITE);
+        File configFile = fs.open("/metroConfig.json", FILE_WRITE);
         if (!configFile)
         {
-            Serial.println("Failed to open output SD config file for writing");
+            Serial.println("Failed to open metro config file for writing");
             return;
         }
 
         if (serializeJson(doc, configFile) == 0)
         {
-            Serial.println("Failed to write output config to SD file");
+            Serial.println("Failed to write metro config file");
         }
 
         configFile.close();
     }
 
-    void loadConfigSD()
+    void loadConfig(fs::FS &fs)
     {
-        File configFile = SD.open("/metroConfig.json", FILE_READ);
+        File configFile = fs.open("/metroConfig.json", FILE_READ);
         if (!configFile)
         {
-            Serial.println("Failed to open SD config file for reading: metro");
+            Serial.println("Failed to open config file for reading: metro");
             return;
         }
-        StaticJsonDocument<512> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, configFile);
         if (error)
         {

@@ -3,7 +3,6 @@
 
 #include "math.h"
 #include <ArduinoJson.h>
-#include <SD.h>
 
 inline float midiNoteToFrequency(int midiNote)
 {

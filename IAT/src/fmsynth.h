@@ -7,8 +7,7 @@
 #include "metro.h"
 #include "sequencer.h"
 #include "output.h"
-#include <SD.h>
-#include <LittleFS.h>
+#include <FS.h>
 #include <ArduinoJson.h>
 #include "utils.h"
 
@@ -88,9 +87,9 @@ public:
     modAdsr.setParams(atk, dec, sus, rel);
   }
 
-  void saveConfigSD()
+  void saveConfig(fs::FS &fs)
   {
-    StaticJsonDocument<1024> doc;
+    JsonDocument doc;
     auto configSection = doc["output"][id];
     configSection["modIndex"] = modIndex;
     configSection["level"] = level;
@@ -104,61 +103,30 @@ public:
     configSection["modSustain"] = modAdsr.m_sustainLevel;
     configSection["modRelease"] = modAdsr.m_release;
 
-    File configFile = SD.open("/outputConfig.json", FILE_WRITE);
+    File configFile = fs.open("/outputConfig.json", FILE_WRITE);
     if (!configFile)
     {
-      Serial.println("Failed to open output SD config file for writing");
+      Serial.println("Failed to open output config file for writing");
       return;
     }
 
     if (serializeJson(doc, configFile) == 0)
     {
-      Serial.println("Failed to write output config to SD file");
+      Serial.println("Failed to write output config file");
     }
 
     configFile.close();
   }
 
-  void saveConfigFS()
+  void loadConfig(fs::FS &fs)
   {
-    StaticJsonDocument<1024> doc;
-    auto configSection = doc["output"][id];
-    configSection["modIndex"] = modIndex;
-    configSection["level"] = level;
-    configSection["modRatio"] = modRatio;
-    configSection["ampAttack"] = carAdsr.m_attack;
-    configSection["ampDecay"] = carAdsr.m_decay;
-    configSection["ampSustain"] = carAdsr.m_sustainLevel;
-    configSection["ampRelease"] = carAdsr.m_release;
-    configSection["modAttack"] = modAdsr.m_attack;
-    configSection["modDecay"] = modAdsr.m_decay;
-    configSection["modSustain"] = modAdsr.m_sustainLevel;
-    configSection["modRelease"] = modAdsr.m_release;
-
-    File configFile = LittleFS.open("/outputConfig.json", FILE_WRITE);
+    File configFile = fs.open("/outputConfig.json", FILE_READ);
     if (!configFile)
     {
-      Serial.println("Failed to open output FS config file for writing");
+      Serial.println("Failed to open config file for reading: FM Synth");
       return;
     }
-
-    if (serializeJson(doc, configFile) == 0)
-    {
-      Serial.println("Failed to write output config to FS file");
-    }
-
-    configFile.close();
-  }
-
-  void loadConfigSD()
-  {
-    File configFile = SD.open("/outputConfig.json", FILE_READ);
-    if (!configFile)
-    {
-      Serial.println("Failed to open SD config file for reading: FM Synth");
-      return;
-    }
-    StaticJsonDocument<1024> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, configFile);
     if (error)
     {
@@ -175,51 +143,14 @@ public:
       carAdsr.m_sustainLevel = configSection["ampSustain"] | carAdsr.m_sustainLevel;
       carAdsr.m_release = configSection["ampRelease"] | carAdsr.m_release;
       modAdsr.m_attack = configSection["modAttack"] | modAdsr.m_attack;
-      modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_attack;
-      modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_attack;
-      modAdsr.m_release = configSection["modRelease"] | modAdsr.m_attack;
+      modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_decay;
+      modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_sustainLevel;
+      modAdsr.m_release = configSection["modRelease"] | modAdsr.m_release;
 
       carAdsr.setParams(carAdsr.m_attack, carAdsr.m_decay, carAdsr.m_sustainLevel, carAdsr.m_release);
       modAdsr.setParams(modAdsr.m_attack, modAdsr.m_decay, modAdsr.m_sustainLevel, modAdsr.m_release);
-
-      configFile.close();
     }
-  }
-
-  void loadConfigFS()
-  {
-    File configFile = LittleFS.open("/outputConfig.json", FILE_READ);
-    if (!configFile)
-    {
-      Serial.println("Failed to open FS config file for reading: FM Synth");
-      return;
-    }
-    StaticJsonDocument<1024> doc;
-    DeserializationError error = deserializeJson(doc, configFile);
-    if (error)
-    {
-      Serial.println("Failed to read file, using default configuration: FM Synth");
-    }
-    else
-    {
-      auto configSection = doc["output"][id];
-      modIndex = configSection["modIndex"] | modIndex;
-      modRatio = configSection["modRatio"] | modRatio;
-      level = configSection["level"] | level;
-      carAdsr.m_attack = configSection["ampAttack"] | carAdsr.m_attack;
-      carAdsr.m_decay = configSection["ampDecay"] | carAdsr.m_decay;
-      carAdsr.m_sustainLevel = configSection["ampSustain"] | carAdsr.m_sustainLevel;
-      carAdsr.m_release = configSection["ampRelease"] | carAdsr.m_release;
-      modAdsr.m_attack = configSection["modAttack"] | modAdsr.m_attack;
-      modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_attack;
-      modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_attack;
-      modAdsr.m_release = configSection["modRelease"] | modAdsr.m_attack;
-
-      carAdsr.setParams(carAdsr.m_attack, carAdsr.m_decay, carAdsr.m_sustainLevel, carAdsr.m_release);
-      modAdsr.setParams(modAdsr.m_attack, modAdsr.m_decay, modAdsr.m_sustainLevel, modAdsr.m_release);
-
-      configFile.close();
-    }
+    configFile.close();
   }
 };
 

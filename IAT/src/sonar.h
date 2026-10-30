@@ -7,9 +7,6 @@
 #include "HardwareSerial.h"
 #include "sensor.h"
 #include <ArduinoJson.h>
-#include <FS.h>
-#include "LittleFS.h"
-#include "SD.h"
 
 struct Sonar : public Sensor
 {

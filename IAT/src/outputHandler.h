@@ -3,7 +3,7 @@
 
 #include "sequencerConfig.h"
 #include "output.h"
-#include <SD.h>
+#include <FS.h>
 
 class OutputHandler
 {
@@ -184,17 +184,17 @@ public:
         return "/handlerConfig" + seqId + ".json";
     }
 
-    void loadConfigSD()
+    void loadConfig(fs::FS &fs)
     {
         String filePath = getHandlerConfigFileName(seqId);
-        File configFile = SD.open(filePath.c_str(), FILE_READ);
+        File configFile = fs.open(filePath.c_str(), FILE_READ);
         if (!configFile)
         {
             Serial.println("Failed to open config file for reading: " + seqId);
             return;
         }
 
-        StaticJsonDocument<256> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, configFile);
         if (error)
         {
@@ -208,17 +208,17 @@ public:
         configFile.close();
     }
 
-    void saveConfigSD()
+    void saveConfig(fs::FS &fs)
     {
         String filePath = getHandlerConfigFileName(seqId);
-        File configFile = SD.open(filePath.c_str(), FILE_WRITE);
+        File configFile = fs.open(filePath.c_str(), FILE_WRITE);
         if (!configFile)
         {
             Serial.println("Failed to open config file for writing: " + seqId);
             return;
         }
 
-        StaticJsonDocument<256> doc;
+        JsonDocument doc;
 
         doc["outputType"] = outputType;
         doc["randVal"] = randVal;

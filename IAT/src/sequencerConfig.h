@@ -3,10 +3,7 @@
 
 #include <Arduino.h>
 #include <FS.h>
-#include <LittleFS.h>
 #include <ArduinoJson.h>
-#include <SD.h>
-#include <SPI.h>
 #include <atomic>
 
 struct ActivationConfig
@@ -333,17 +330,17 @@ public:
         }
     }
 
-    void saveConfigSD()
+    void saveConfig(fs::FS &fs)
     {
         String filePath = getConfigFileName(seqId);
-        File configFile = SD.open(filePath.c_str(), FILE_WRITE);
+        File configFile = fs.open(filePath.c_str(), FILE_WRITE);
         if (!configFile)
         {
             Serial.println("Failed to open config file for writing: " + seqId);
             return;
         }
 
-        StaticJsonDocument<4096> doc;
+        JsonDocument doc;
 
         doc["runTime"] = runTime;
         doc["threshold"] = threshold;
@@ -355,8 +352,8 @@ public:
         doc["isLoadCell"] = isLoadCell;
         doc["sensorTrigPriority"] = sensorActivation.priorityLevel;
 
-        JsonArray jpitches = doc.createNestedArray("pitches");
-        JsonArray jvelocities = doc.createNestedArray("velocities");
+        JsonArray jpitches = doc["pitches"].to<JsonArray>();
+        JsonArray jvelocities = doc["velocities"].to<JsonArray>();
 
         for (int i = 0; i < 32; i++)
         {
@@ -372,17 +369,17 @@ public:
         configFile.close();
     }
 
-    void loadConfigSD()
+    void loadConfig(fs::FS &fs)
     {
         String filePath = getConfigFileName(seqId);
-        File configFile = SD.open(filePath.c_str(), FILE_READ);
+        File configFile = fs.open(filePath.c_str(), FILE_READ);
         if (!configFile)
         {
             Serial.println("Failed to open config file for reading: " + seqId);
             return;
         }
 
-        StaticJsonDocument<4096> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, configFile);
         if (error)
         {

@@ -160,7 +160,7 @@ inline void setupAllControlHandlers()
 
 inline void processControlMessage(const String &jsonMessage)
 {
-    StaticJsonDocument<512> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, jsonMessage);
     if (error)
     {
