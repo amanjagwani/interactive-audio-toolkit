@@ -14,7 +14,6 @@
   "dependencies": [
     { "owner": "bblanchon", "name": "ArduinoJson", "version": "^7.4.3" },
     { "owner": "sparkfun", "name": "SparkFun VL53L1X 4m Laser Distance Sensor", "version": "^1.2.12" },
-    { "owner": "queuetue", "name": "Queuetue HX711 Library", "version": "^1.0.2" },
     { "owner": "opensensinglab", "name": "TFMini", "version": "^0.1.0" },
     { "owner": "waspinator", "name": "AccelStepper", "version": "^1.64.0" },
     { "owner": "budryerson", "name": "TFMPI2C", "version": "^1.6.0" },
