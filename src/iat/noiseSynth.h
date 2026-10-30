@@ -12,14 +12,14 @@ namespace iat
 
 class NoiseSynth : public Output
 {
-private:
+  private:
     Noise noise;
     Reson reson;
     RandMod randMod;
     float frequency;
     float modDepth;
 
-public:
+  public:
     bool manualEnabled;
     bool triggerEnabled;
     NoiseSynth(const char *id)

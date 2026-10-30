@@ -18,7 +18,7 @@ class OutputHandler
     const unsigned long renderInterval = 2000;
     bool stepValsSet = false;
 
-public:
+  public:
     int8_t outputType;
     uint8_t randVal;
 

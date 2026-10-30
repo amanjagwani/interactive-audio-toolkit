@@ -16,7 +16,7 @@ class DCMotor : public Output
     float freq;
     gpio_num_t MOTOR_PWM_PIN;
 
-public:
+  public:
     DCMotor(gpio_num_t pin, const char *id)
         : Output(120, 4, id), initFreq(5000), dutyCycle(0), resolution(8), freq(0), MOTOR_PWM_PIN(pin)
     {

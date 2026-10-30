@@ -9,7 +9,7 @@ namespace iat
 class ADSR
 {
 
-public:
+  public:
     enum class State
     {
         IDLE,
@@ -23,7 +23,7 @@ public:
     float m_release;
     float m_sustainLevel;
 
-private:
+  private:
     double m_attackIncr;
     double m_decayIncr;
     double m_releaseIncr;
@@ -39,7 +39,7 @@ private:
         m_releaseIncr = 1.0 / (AUDIO_SR * release);
     }
 
-public:
+  public:
     ADSR(bool linear) : m_attackIncr(0.1), m_decayIncr(0.1), m_sustainLevel(0.7), m_releaseIncr(0.1), m_state(State::IDLE), m_currentVal(0), m_isLinear(linear)
     {
         std::fill_n(m_out, AUDIO_BUFFER_SIZE, 0.0);

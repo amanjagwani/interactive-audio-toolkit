@@ -10,7 +10,7 @@ namespace iat
 class Sequencer
 {
 
-public:
+  public:
     enum class Mode
     {
         FORWARD,
@@ -18,7 +18,7 @@ public:
         RANDOM
     };
 
-private:
+  private:
     uint16_t pitches[32];
     float velocities[32];
     int8_t currentStep;
@@ -29,7 +29,7 @@ private:
     Mode sequencerMode;
     bool lastMetronomeState = false;
 
-public:
+  public:
     Sequencer(int bpm) : currentStep(0), lastGateTime(0), gateState(0), numActiveSteps(16), sequencerMode(Mode::FORWARD)
     {
         std::fill_n(pitches, 32, 0);

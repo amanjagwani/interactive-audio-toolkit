@@ -19,7 +19,7 @@ struct ActivationConfig
 
 class SequencerConfig
 {
-private:
+  private:
     uint16_t pitches[32];
     float velocities[32];
     float probability;
@@ -58,7 +58,7 @@ private:
     unsigned long autoPlayStartTimestamp = 0;
     unsigned long lastActiveTimestamp = 0;
 
-public:
+  public:
     ActivationConfig *currentActivation;
 
     SequencerConfig(const String &id)

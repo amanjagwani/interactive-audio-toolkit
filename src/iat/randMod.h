@@ -10,7 +10,7 @@ namespace iat
 
 class RandMod
 {
-private:
+  private:
     float sampleRate;
     float updateRate;
     float currentValue;
@@ -18,7 +18,7 @@ private:
     float stepSize;
     int counter;
 
-public:
+  public:
     RandMod()
         : sampleRate(AUDIO_SR), updateRate(2.0f), currentValue(0.0f), targetValue(0.0f), stepSize(0.0f), counter(0)
     {
@@ -42,7 +42,7 @@ public:
         return currentValue;
     }
 
-private:
+  private:
     void generateNewTarget()
     {
         targetValue = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;

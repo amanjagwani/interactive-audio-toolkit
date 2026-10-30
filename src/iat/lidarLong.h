@@ -11,7 +11,7 @@ namespace iat
 
 class LidarLong : public Sensor
 {
-private:
+  private:
     HardwareSerial lidarSerial;
     TFMini tfmini;
     uint16_t strength;
@@ -19,7 +19,7 @@ private:
     gpio_num_t TX_PIN;
     unsigned long lastUpdate;
 
-public:
+  public:
     LidarLong(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
         : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), lidarSerial(2), lastUpdate(0) {}
 

@@ -9,13 +9,13 @@ namespace iat
 
 class Noise
 {
-private:
+  private:
     static constexpr float coeff = 4.6566129e-010f;
     float amp;
     int32_t randSeed;
     float out[AUDIO_BUFFER_SIZE];
 
-public:
+  public:
     Noise()
     {
         amp = 0.1f;

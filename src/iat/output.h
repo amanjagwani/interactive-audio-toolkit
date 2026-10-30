@@ -12,7 +12,7 @@ namespace iat
 
 class Output
 {
-protected:
+  protected:
     Sequencer sequencer;
     uint16_t bpm;
     float noteDuration;
@@ -22,7 +22,7 @@ protected:
     String configPath = "/config.json";
     const char *id;
 
-public:
+  public:
     SequencerConfig *seqConfig;
     Output(uint16_t defaultBpm, uint8_t defaultSubDiv, const char *idNum) : bpm(defaultBpm),
                                                                             sequencer(defaultBpm),

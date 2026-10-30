@@ -16,7 +16,7 @@ class Metro
     bool click;
     int bpm;
 
-public:
+  public:
     Metro(int bpm) : lastClick(0), isRunning(0), bpm(bpm)
     {
         millisPerBeat = 60000.0f / bpm;

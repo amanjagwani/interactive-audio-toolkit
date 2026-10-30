@@ -15,7 +15,7 @@ class Stepper : public Output
     AccelStepper stepper;
     bool directionFlag;
 
-public:
+  public:
     Stepper(gpio_num_t STEPPER_STEP_PIN, gpio_num_t STEPPER_DIR_PIN, const char *id) : Output(120, 4, id), freq(440), defaultAccl(500), directionFlag(false),
                                                                                        maxSpeed(5000), stepper(1, STEPPER_STEP_PIN, STEPPER_DIR_PIN)
     {

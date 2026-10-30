@@ -19,7 +19,7 @@ class Oscillator
     double m_out[AUDIO_BUFFER_SIZE];
     bool m_isSine;
 
-public:
+  public:
     Oscillator(double amp, float frequency) : m_amp(amp), m_freq(frequency), m_phs(0), m_isSine(1), m_incr(0)
     {
         std::fill_n(m_out, AUDIO_BUFFER_SIZE, 0.0);

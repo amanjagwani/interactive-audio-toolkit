@@ -39,24 +39,19 @@ inline std::map<String, std::function<void(JsonVariant)>> controlHandlers;
 inline void setupControlHandlersForSensor(Sensor *sensor)
 {
     String sensorId = sensor->getSensorId();
-    controlHandlers[sensorId + "-plot"] = [sensor](JsonVariant value)
-    {
+    controlHandlers[sensorId + "-plot"] = [sensor](JsonVariant value) {
         sensor->plot = value.as<bool>();
     };
-    controlHandlers[sensorId + "-isEnabled"] = [sensor](JsonVariant value)
-    {
+    controlHandlers[sensorId + "-isEnabled"] = [sensor](JsonVariant value) {
         sensor->isEnabled = value.as<bool>();
     };
-    controlHandlers[sensorId + "-min"] = [sensor](JsonVariant value)
-    {
+    controlHandlers[sensorId + "-min"] = [sensor](JsonVariant value) {
         sensor->min = value.as<int>();
     };
-    controlHandlers[sensorId + "-max"] = [sensor](JsonVariant value)
-    {
+    controlHandlers[sensorId + "-max"] = [sensor](JsonVariant value) {
         sensor->max = value.as<int>();
     };
-    controlHandlers[sensorId + "-updateInterval"] = [sensor](JsonVariant value)
-    {
+    controlHandlers[sensorId + "-updateInterval"] = [sensor](JsonVariant value) {
         sensor->updateInterval = value.as<unsigned long>();
     };
 
@@ -73,52 +68,41 @@ inline void setupControlHandlersForSensor(Sensor *sensor)
         SequencerConfig *sc = seqConfigs[i];
         OutputHandler *oh = outputHandlers[i];
         String seqId = sc->getSeqId();
-        controlHandlers[seqId + "-threshold"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-threshold"] = [sc](JsonVariant value) {
             sc->setThreshold(value.as<uint32_t>());
         };
-        controlHandlers[seqId + "-thresholdRange"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-thresholdRange"] = [sc](JsonVariant value) {
             sc->setThresholdRange(value.as<uint32_t>());
         };
-        controlHandlers[seqId + "-subDiv"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-subDiv"] = [sc](JsonVariant value) {
             sc->setSubDiv(value.as<uint8_t>());
         };
-        controlHandlers[seqId + "-runTime"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-runTime"] = [sc](JsonVariant value) {
             sc->setRunTime(value.as<uint16_t>());
         };
-        controlHandlers[seqId + "-trigEnable"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-trigEnable"] = [sc](JsonVariant value) {
             sc->setTrigEnable(value.as<bool>());
         };
-        controlHandlers[seqId + "-manualActivation"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-manualActivation"] = [sc](JsonVariant value) {
             sc->setManualActivation(value.as<bool>());
         };
-        controlHandlers[seqId + "-sensorTrigPriority"] = [sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-sensorTrigPriority"] = [sc](JsonVariant value) {
             sc->setPriorityLevel(value.as<int8_t>());
         };
-        controlHandlers[seqId + "-mode"] = [sc, oh](JsonVariant value)
-        {
+        controlHandlers[seqId + "-mode"] = [sc, oh](JsonVariant value) {
             uint8_t modeValue = value.as<uint8_t>();
             sc->setMode(modeValue);
             oh->setMode();
         };
-        controlHandlers[seqId + "-numSteps"] = [sc, oh](JsonVariant value)
-        {
+        controlHandlers[seqId + "-numSteps"] = [sc, oh](JsonVariant value) {
             uint8_t numStepsValue = value.as<uint8_t>();
             sc->setNumSteps(numStepsValue);
             oh->setSteps();
         };
-        controlHandlers[seqId + "-randVal"] = [oh](JsonVariant value)
-        {
+        controlHandlers[seqId + "-randVal"] = [oh](JsonVariant value) {
             oh->setProbWeight(value.as<int>());
         };
-        controlHandlers[seqId + "-pitches"] = [oh, sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-pitches"] = [oh, sc](JsonVariant value) {
             JsonArray pitches = value.as<JsonArray>();
             for (size_t j = 0; j < pitches.size(); j++)
             {
@@ -126,8 +110,7 @@ inline void setupControlHandlersForSensor(Sensor *sensor)
             }
             oh->setPitches();
         };
-        controlHandlers[seqId + "-velocities"] = [oh, sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-velocities"] = [oh, sc](JsonVariant value) {
             JsonArray velocities = value.as<JsonArray>();
             for (size_t j = 0; j < velocities.size(); j++)
             {
@@ -135,8 +118,7 @@ inline void setupControlHandlersForSensor(Sensor *sensor)
             }
             oh->setVelocities();
         };
-        controlHandlers[seqId + "-output"] = [oh, sc](JsonVariant value)
-        {
+        controlHandlers[seqId + "-output"] = [oh, sc](JsonVariant value) {
             sc->setSequencerActive(false);
             int indexValue = value.as<int>();
             int count = 0;

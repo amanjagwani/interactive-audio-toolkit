@@ -10,14 +10,14 @@ namespace iat
 
 class Reson
 {
-private:
+  private:
     float fs;
     float fc;
     float bandwidth;
     float b1, b2, a;
     float y[2];
 
-public:
+  public:
     Reson()
         : fs(AUDIO_SR), fc(2000.0f), bandwidth(300.0f)
     {
