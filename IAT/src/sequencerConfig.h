@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <FS.h>
-#include <LittleFs.h>
+#include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <SD.h>
 #include <SPI.h>

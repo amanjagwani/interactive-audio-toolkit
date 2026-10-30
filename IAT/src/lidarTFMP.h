@@ -14,7 +14,7 @@ struct LidarTFMP : public Sensor
     bool isConnected;
     gpio_num_t I2C_SDA, I2C_SCL;
 
-    LidarTFMP(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const string id) : Sensor(updatePeriod, id, false) {};
+    LidarTFMP(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false) {};
 
     int begin()
     {

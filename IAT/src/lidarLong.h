@@ -14,10 +14,11 @@ private:
     uint16_t strength;
     gpio_num_t RX_PIN;
     gpio_num_t TX_PIN;
+    unsigned long lastUpdate;
 
 public:
     LidarLong(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), lidarSerial(2) {}
+        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), lidarSerial(2), lastUpdate(0) {}
 
     void begin()
     {
@@ -26,7 +27,7 @@ public:
         Serial.println("TFMINI LIDAR Initialized");
     }
 
-    void read() override
+    void read()
     {
         if (isEnabled)
         {
@@ -37,7 +38,7 @@ public:
                 {
                     lastUpdate = currentTime;
                     reading = tfmini.getDistance();
-                    reading = clamp(reading, min, max);
+                    reading = constrain(reading, min, max);
 
 #ifdef SENSOR_VAL_PRINT
                     Serial.print("Lidar Long Range Reading: ");

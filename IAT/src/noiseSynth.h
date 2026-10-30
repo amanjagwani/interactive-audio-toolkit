@@ -1,9 +1,9 @@
 #ifndef NOISESYNTH_H
 #define NOISESYNTH_H
 
-#include "Noise.h"
-#include "Reson.h"
-#include "RandMod.h"
+#include "noise.h"
+#include "reson.h"
+#include "randMod.h"
 #include "config.h"
 #include "output.h"
 

@@ -19,7 +19,7 @@ struct Sonar : public Sensor
     unsigned long lastUpdate;
 
     Sonar(gpio_num_t RX, gpio_num_t TX, unsigned long updatePeriod, const char *idNum)
-        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), sonarSerial(2) {}
+        : Sensor(updatePeriod, idNum, false), RX_PIN(RX), TX_PIN(TX), sonarSerial(2), lastUpdate(0) {}
 
     void begin()
     {
@@ -27,7 +27,7 @@ struct Sonar : public Sensor
         Serial.println("MB1604 SONAR Initialized");
     }
 
-    void read() override
+    void read()
     {
         if (isEnabled)
         {
@@ -41,7 +41,7 @@ struct Sonar : public Sensor
                     {
                         sreading = sreading.substring(1);
                         reading = sreading.toInt();
-                        reading = clamp(reading, min, max);
+                        reading = constrain(reading, min, max);
 
 #ifdef SENSOR_VAL_PRINT
                         Serial.print("Sonar Reading: ");

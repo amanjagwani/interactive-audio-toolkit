@@ -4,9 +4,6 @@
 #include <driver/i2s.h>
 #include "config.h"
 
-const float AUDIO_SR = 44100.0f;
-const std::size_t AUDIO_BUFFER_SIZE = 256;
-const uint16_t WAVETABLE_SIZE = 1024;
 const i2s_port_t i2sNum = I2S_NUM_0;
 
 // change as required
@@ -33,13 +30,13 @@ const i2s_pin_config_t pinConfig = {
     .data_out_num = I2S_DIN,
     .data_in_num = I2S_PIN_NO_CHANGE};
 
-void i2sSetup()
+inline void i2sSetup()
 {
     i2s_driver_install(i2sNum, &i2sConfig, 0, NULL);
     i2s_set_pin(i2sNum, &pinConfig);
 }
 
-void i2sAudioOut(const double *leftSamples, const double *rightSamples)
+inline void i2sAudioOut(const double *leftSamples, const double *rightSamples)
 {
     int16_t intBuffer[AUDIO_BUFFER_SIZE * 2];
     for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)

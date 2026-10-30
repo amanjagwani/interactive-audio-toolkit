@@ -5,14 +5,14 @@
 #include <ArduinoJson.h>
 #include <map>
 #include <functional>
-#include "Sensor.h"
+#include "sensor.h"
 #include "sequencerConfig.h"
 #include "outputHandler.h"
 #include "output.h"
 
-static std::map<String, Sensor *> sensorMap;
+inline std::map<String, Sensor *> sensorMap;
 
-static inline void initSensors(Sensor *sensors[], size_t sensorCount)
+inline void initSensors(Sensor *sensors[], size_t sensorCount)
 {
     for (size_t i = 0; i < sensorCount; i++)
     {
@@ -21,9 +21,9 @@ static inline void initSensors(Sensor *sensors[], size_t sensorCount)
     }
 }
 
-static std::map<String, Output *> outputMap;
+inline std::map<String, Output *> outputMap;
 
-static inline void initOutputs(Output *outputs[], size_t outputCount)
+inline void initOutputs(Output *outputs[], size_t outputCount)
 {
     for (size_t i = 0; i < outputCount; i++)
     {
@@ -31,9 +31,9 @@ static inline void initOutputs(Output *outputs[], size_t outputCount)
     }
 }
 
-static std::map<String, std::function<void(JsonVariant)>> controlHandlers;
+inline std::map<String, std::function<void(JsonVariant)>> controlHandlers;
 
-static inline void setupControlHandlersForSensor(Sensor *sensor)
+inline void setupControlHandlersForSensor(Sensor *sensor)
 {
     String sensorId = sensor->getSensorId();
     controlHandlers[sensorId + "-plot"] = [sensor](JsonVariant value)
@@ -150,7 +150,7 @@ static inline void setupControlHandlersForSensor(Sensor *sensor)
     }
 }
 
-static inline void setupAllControlHandlers()
+inline void setupAllControlHandlers()
 {
     for (auto &pair : sensorMap)
     {
@@ -158,7 +158,7 @@ static inline void setupAllControlHandlers()
     }
 }
 
-static inline void processControlMessage(const String &jsonMessage)
+inline void processControlMessage(const String &jsonMessage)
 {
     StaticJsonDocument<512> doc;
     DeserializationError error = deserializeJson(doc, jsonMessage);
