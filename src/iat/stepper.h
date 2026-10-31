@@ -31,7 +31,7 @@ class Stepper : public Output
         }
         seqTrig = getSubDivTrig(click);
 
-        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
+        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig.load()->getSequencerActive());
 
         if (gate)
         {

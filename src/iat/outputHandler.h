@@ -67,8 +67,8 @@ class OutputHandler
         {
             if (seqConfig->currentActivation != nullptr &&
                 (output->seqConfig == nullptr ||
-                 output->seqConfig->currentActivation == nullptr ||
-                 seqConfig->currentActivation->priorityLevel > output->seqConfig->currentActivation->priorityLevel))
+                 output->seqConfig.load()->currentActivation == nullptr ||
+                 seqConfig->currentActivation->priorityLevel > output->seqConfig.load()->currentActivation->priorityLevel))
             {
 
                 output->setSeqConfig(seqConfig);

@@ -29,7 +29,7 @@ class Relay : public Output
             return;
         }
         seqTrig = getSubDivTrig(click);
-        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
+        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig.load()->getSequencerActive());
         unsigned long currentTime = micros();
 
         if (gate && sequencer.getCurrentPitch() > 0)

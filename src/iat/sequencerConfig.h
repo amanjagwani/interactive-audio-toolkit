@@ -24,7 +24,7 @@ class SequencerConfig
     float velocities[32];
     float probability;
     int numSteps;
-    uint8_t subDiv;
+    std::atomic<uint8_t> subDiv;
     uint32_t threshold;
     uint16_t *sensorValue;
     uint8_t mode;
@@ -348,7 +348,7 @@ class SequencerConfig
         doc["runTime"] = runTime;
         doc["threshold"] = threshold;
         doc["trigEnable"] = trigEnable;
-        doc["subDiv"] = subDiv;
+        doc["subDiv"] = subDiv.load();
         doc["mode"] = mode;
         doc["numSteps"] = numSteps;
         doc["thresholdRange"] = thresholdRange;
@@ -393,7 +393,7 @@ class SequencerConfig
             runTime = doc["runTime"] | runTime;
             threshold = doc["threshold"] | threshold;
             trigEnable = doc["trigEnable"] | trigEnable;
-            subDiv = doc["subDiv"] | subDiv;
+            subDiv = doc["subDiv"] | subDiv.load();
             mode = doc["mode"] | mode;
             numSteps = doc["numSteps"] | numSteps;
             thresholdRange = doc["thresholdRange"] | thresholdRange;

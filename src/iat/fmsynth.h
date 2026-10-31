@@ -21,9 +21,9 @@ class FmSynth : public Output
     ADSR carAdsr;
     ADSR modAdsr;
     float freq;
-    float modIndex;
-    float modRatio;
-    float level;
+    std::atomic<float> modIndex;
+    std::atomic<float> modRatio;
+    std::atomic<float> level;
     float velocity;
 
   public:
@@ -51,7 +51,7 @@ class FmSynth : public Output
         }
         seqTrig = getSubDivTrig(click);
 
-        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig->getSequencerActive());
+        bool gate = sequencer.updateStepAndGate(seqTrig, seqConfig.load()->getSequencerActive());
         freq = midiNoteToFrequency(sequencer.getCurrentPitch()) + 0.5;
         if (freq < 4.0)
         {
@@ -94,17 +94,17 @@ class FmSynth : public Output
     {
         JsonDocument doc;
         auto configSection = doc["output"][id];
-        configSection["modIndex"] = modIndex;
-        configSection["level"] = level;
-        configSection["modRatio"] = modRatio;
-        configSection["ampAttack"] = carAdsr.m_attack;
-        configSection["ampDecay"] = carAdsr.m_decay;
-        configSection["ampSustain"] = carAdsr.m_sustainLevel;
-        configSection["ampRelease"] = carAdsr.m_release;
-        configSection["modAttack"] = modAdsr.m_attack;
-        configSection["modDecay"] = modAdsr.m_decay;
-        configSection["modSustain"] = modAdsr.m_sustainLevel;
-        configSection["modRelease"] = modAdsr.m_release;
+        configSection["modIndex"] = modIndex.load();
+        configSection["level"] = level.load();
+        configSection["modRatio"] = modRatio.load();
+        configSection["ampAttack"] = carAdsr.m_attack.load();
+        configSection["ampDecay"] = carAdsr.m_decay.load();
+        configSection["ampSustain"] = carAdsr.m_sustainLevel.load();
+        configSection["ampRelease"] = carAdsr.m_release.load();
+        configSection["modAttack"] = modAdsr.m_attack.load();
+        configSection["modDecay"] = modAdsr.m_decay.load();
+        configSection["modSustain"] = modAdsr.m_sustainLevel.load();
+        configSection["modRelease"] = modAdsr.m_release.load();
 
         File configFile = fs.open("/outputConfig.json", FILE_WRITE);
         if (!configFile)
@@ -138,17 +138,17 @@ class FmSynth : public Output
         else
         {
             auto configSection = doc["output"][id];
-            modIndex = configSection["modIndex"] | modIndex;
-            modRatio = configSection["modRatio"] | modRatio;
-            level = configSection["level"] | level;
-            carAdsr.m_attack = configSection["ampAttack"] | carAdsr.m_attack;
-            carAdsr.m_decay = configSection["ampDecay"] | carAdsr.m_decay;
-            carAdsr.m_sustainLevel = configSection["ampSustain"] | carAdsr.m_sustainLevel;
-            carAdsr.m_release = configSection["ampRelease"] | carAdsr.m_release;
-            modAdsr.m_attack = configSection["modAttack"] | modAdsr.m_attack;
-            modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_decay;
-            modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_sustainLevel;
-            modAdsr.m_release = configSection["modRelease"] | modAdsr.m_release;
+            modIndex = configSection["modIndex"] | modIndex.load();
+            modRatio = configSection["modRatio"] | modRatio.load();
+            level = configSection["level"] | level.load();
+            carAdsr.m_attack = configSection["ampAttack"] | carAdsr.m_attack.load();
+            carAdsr.m_decay = configSection["ampDecay"] | carAdsr.m_decay.load();
+            carAdsr.m_sustainLevel = configSection["ampSustain"] | carAdsr.m_sustainLevel.load();
+            carAdsr.m_release = configSection["ampRelease"] | carAdsr.m_release.load();
+            modAdsr.m_attack = configSection["modAttack"] | modAdsr.m_attack.load();
+            modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_decay.load();
+            modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_sustainLevel.load();
+            modAdsr.m_release = configSection["modRelease"] | modAdsr.m_release.load();
 
             carAdsr.setParams(carAdsr.m_attack, carAdsr.m_decay, carAdsr.m_sustainLevel, carAdsr.m_release);
             modAdsr.setParams(modAdsr.m_attack, modAdsr.m_decay, modAdsr.m_sustainLevel, modAdsr.m_release);

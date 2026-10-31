@@ -3,6 +3,7 @@
 
 #include "stdlib.h"
 #include <Arduino.h>
+#include <atomic>
 
 namespace iat
 {
@@ -19,14 +20,14 @@ class Sequencer
     };
 
   private:
-    uint16_t pitches[32];
-    float velocities[32];
-    int8_t currentStep;
-    int8_t numActiveSteps;
+    std::atomic<uint16_t> pitches[32];
+    std::atomic<float> velocities[32];
+    std::atomic<int8_t> currentStep;
+    std::atomic<int8_t> numActiveSteps;
     unsigned long lastGateTime;
-    unsigned long gateDuration;
+    std::atomic<unsigned long> gateDuration;
     bool gateState;
-    Mode sequencerMode;
+    std::atomic<Mode> sequencerMode;
     bool lastMetronomeState = false;
 
   public:

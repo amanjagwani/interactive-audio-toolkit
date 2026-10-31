@@ -14,8 +14,8 @@ class Output
 {
   protected:
     Sequencer sequencer;
-    uint16_t bpm;
-    float noteDuration;
+    std::atomic<uint16_t> bpm;
+    std::atomic<float> noteDuration;
     bool seqTrig;
     unsigned long sequencerStartTime = 0;
     uint16_t counter;
@@ -23,7 +23,7 @@ class Output
     const char *id;
 
   public:
-    SequencerConfig *seqConfig;
+    std::atomic<SequencerConfig *> seqConfig;
     Output(uint16_t defaultBpm, uint8_t defaultSubDiv, const char *idNum) : bpm(defaultBpm),
                                                                             sequencer(defaultBpm),
                                                                             counter(0),
@@ -37,15 +37,15 @@ class Output
     {
         if (config != nullptr)
         {
-            seqConfig = config;
             for (int i = 0; i < 32; i++)
             {
-                sequencer.setPitch(i, seqConfig->getPitch(i));
-                sequencer.setVelocity(i, seqConfig->getVelocity(i));
+                sequencer.setPitch(i, config->getPitch(i));
+                sequencer.setVelocity(i, config->getVelocity(i));
             }
 
-            sequencer.setMode(seqConfig->getMode());
-            sequencer.setSteps(seqConfig->getNumSteps());
+            sequencer.setMode(config->getMode());
+            sequencer.setSteps(config->getNumSteps());
+            seqConfig = config;
         }
     }
 
@@ -78,9 +78,10 @@ class Output
     {
         bpm = globBpm;
         float bpmAtSubDiv;
-        if (seqConfig && seqConfig->getSubDiv() >= 1)
+        SequencerConfig *config = seqConfig;
+        if (config && config->getSubDiv() >= 1)
         {
-            bpmAtSubDiv = bpm / seqConfig->getSubDiv();
+            bpmAtSubDiv = bpm / config->getSubDiv();
         }
         else
         {
@@ -92,17 +93,18 @@ class Output
 
     bool getSubDivTrig(bool click)
     {
-        if (!seqConfig)
+        SequencerConfig *config = seqConfig;
+        if (!config)
             return false;
 
-        if (seqConfig->getSubDiv() == 1)
+        if (config->getSubDiv() == 1)
         {
             seqTrig = click;
         }
         else if (click)
         {
             counter = (counter + 1) % 128;
-            seqTrig = (click && counter % seqConfig->getSubDiv() == 0);
+            seqTrig = (click && counter % config->getSubDiv() == 0);
         }
         else
         {

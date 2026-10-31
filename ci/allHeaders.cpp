@@ -18,6 +18,7 @@
 #include <iat/randMod.h>
 #include <iat/relay.h>
 #include <iat/reson.h>
+#include <iat/ring.h>
 #include <iat/sensor.h>
 #include <iat/sequencer.h>
 #include <iat/sequencerConfig.h>
@@ -26,3 +27,5 @@
 #include <iat/utils.h>
 
 using namespace iat;
+
+template class iat::Ring<uint32_t, 8>;

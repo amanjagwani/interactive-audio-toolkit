@@ -6,6 +6,7 @@
 #include "randMod.h"
 #include "config.h"
 #include "output.h"
+#include <atomic>
 
 namespace iat
 {
@@ -16,12 +17,13 @@ class NoiseSynth : public Output
     Noise noise;
     Reson reson;
     RandMod randMod;
-    float frequency;
-    float modDepth;
+    std::atomic<float> frequency;
+    std::atomic<float> modDepth;
+    float outputBuffer[AUDIO_BUFFER_SIZE];
 
   public:
-    bool manualEnabled;
-    bool triggerEnabled;
+    std::atomic<bool> manualEnabled;
+    std::atomic<bool> triggerEnabled;
     NoiseSynth(const char *id)
         : Output(120, 2, id), randMod(), modDepth(200.0f), manualEnabled(false), triggerEnabled(false) {}
 
@@ -35,12 +37,13 @@ class NoiseSynth : public Output
     const float *process()
     {
         const float *noiseBuffer = noise.process();
-        static float outputBuffer[AUDIO_BUFFER_SIZE];
+        const float baseFreq = frequency;
+        const float depth = modDepth;
 
         for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
         {
-            float mod = randMod.process() * modDepth;
-            reson.setFrequency(frequency + mod);
+            float mod = randMod.process() * depth;
+            reson.setFrequency(baseFreq + mod);
             outputBuffer[i] = reson.processSample(noiseBuffer[i]);
         }
 

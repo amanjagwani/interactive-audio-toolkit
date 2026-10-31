@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <cstdlib>
 #include "config.h"
+#include <atomic>
 
 namespace iat
 {
@@ -12,7 +13,7 @@ class RandMod
 {
   private:
     float sampleRate;
-    float updateRate;
+    std::atomic<float> updateRate;
     float currentValue;
     float targetValue;
     float stepSize;
@@ -28,7 +29,6 @@ class RandMod
     void setUpdateRate(float ur)
     {
         updateRate = ur;
-        calculateStepSize();
     }
 
     float process()

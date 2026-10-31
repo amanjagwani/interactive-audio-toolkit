@@ -31,6 +31,22 @@ SequencerConfig &lidarConfigLow = lidar.lowSeq;
 OutputHandler &sensorHandlerLow = sensor.lowHandler;
 OutputHandler &lidarHandlerLow = lidar.lowHandler;
 
+void audioTask(void *)
+{
+    while (true)
+    {
+        bool click = metro.getClick();
+        const double *buffer = nullptr;
+        SequencerConfig *config = synth.getSeqConfig();
+        if (config && config->getSequencerActive())
+        {
+            synth.setBpm(BPM);
+            buffer = synth.process(click);
+        }
+        i2sAudioOut(buffer, buffer);
+    }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -95,6 +111,8 @@ void setup()
     synth.setModRatio(3);
     synth.setCarEnv(0.3, 0.3, 0.5, 0.3);
     synth.setModEnv(0.4, 0.1, 0.3, 0.1);
+
+    xTaskCreatePinnedToCore(audioTask, "audio", 8192, nullptr, configMAX_PRIORITIES - 1, nullptr, 1);
 }
 
 void loop()
@@ -110,20 +128,11 @@ void loop()
     Serial.print("Lidar Reading");
     Serial.println(lidarReading);
 
-    // run metronome and synth
-    bool click = metro.getClick();
-    const double *buffer = nullptr;
-    if (synth.getSeqConfig()->getSequencerActive())
-    {
-        synth.setBpm(BPM);
-        buffer = synth.process(click);
-    }
-    i2sAudioOut(buffer, buffer);
-
+    SequencerConfig *config = synth.getSeqConfig();
     Serial.print("Sequencer Active:");
-    Serial.println(synth.getSeqConfig()->getSequencerActive());
+    Serial.println(config && config->getSequencerActive());
 
-    // Enable dynamic troggering of sequencer from sensor thresholds
+    // Enable dynamic triggering of sequencer from sensor thresholds
     sensorConfigLow.setTrigger();
     sensorHandlerLow.enableOutputTriggering();
     sensorHandlerLow.renderStepProbability();

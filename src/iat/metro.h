@@ -4,17 +4,18 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <ArduinoJson.h>
+#include <atomic>
 
 namespace iat
 {
 
 class Metro
 {
-    unsigned long lastClick;
-    bool isRunning;
-    float millisPerBeat;
-    bool click;
-    int bpm;
+    std::atomic<unsigned long> lastClick;
+    std::atomic<bool> isRunning;
+    std::atomic<float> millisPerBeat;
+    std::atomic<bool> click;
+    std::atomic<int> bpm;
 
   public:
     Metro(int bpm) : lastClick(0), isRunning(0), bpm(bpm)
@@ -31,7 +32,7 @@ class Metro
     {
         millisPerBeat = 60000.0f / (bpm + 0.000001);
         Serial.print("Metro loaded saved BPM: ");
-        Serial.println(bpm);
+        Serial.println(bpm.load());
     }
     void setBpm(int globBpm)
     {
@@ -73,7 +74,7 @@ class Metro
     {
         JsonDocument doc;
         auto configSection = doc["metro"];
-        configSection["bpm"] = bpm;
+        configSection["bpm"] = bpm.load();
 
         File configFile = fs.open("/metroConfig.json", FILE_WRITE);
         if (!configFile)
@@ -107,7 +108,7 @@ class Metro
         else
         {
             auto configSection = doc["metro"];
-            bpm = configSection["bpm"] | bpm;
+            bpm = configSection["bpm"] | bpm.load();
         }
         configFile.close();
     }

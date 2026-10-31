@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "config.h"
+#include <atomic>
 
 namespace iat
 {
@@ -11,7 +12,7 @@ class Noise
 {
   private:
     static constexpr float coeff = 4.6566129e-010f;
-    float amp;
+    std::atomic<float> amp;
     int32_t randSeed;
     float out[AUDIO_BUFFER_SIZE];
 
@@ -28,10 +29,11 @@ class Noise
 
     const float *process()
     {
+        const float a = amp;
         for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
         {
             randSeed *= 16807;
-            out[i] = (randSeed * coeff) * amp;
+            out[i] = (randSeed * coeff) * a;
         }
         return out;
     }

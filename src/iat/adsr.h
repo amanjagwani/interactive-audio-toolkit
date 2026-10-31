@@ -2,6 +2,7 @@
 #define ADSR_H
 
 #include "config.h"
+#include <atomic>
 
 namespace iat
 {
@@ -18,15 +19,15 @@ class ADSR
         SUSTAIN,
         RELEASE
     };
-    float m_attack;
-    float m_decay;
-    float m_release;
-    float m_sustainLevel;
+    std::atomic<float> m_attack;
+    std::atomic<float> m_decay;
+    std::atomic<float> m_release;
+    std::atomic<float> m_sustainLevel;
 
   private:
-    double m_attackIncr;
-    double m_decayIncr;
-    double m_releaseIncr;
+    float m_attackIncr;
+    float m_decayIncr;
+    float m_releaseIncr;
     double m_currentVal;
     double m_out[AUDIO_BUFFER_SIZE];
     State m_state;
@@ -34,13 +35,13 @@ class ADSR
 
     void calcIncr(float attack, float decay, float release)
     {
-        m_attackIncr = 1.0 / (AUDIO_SR * attack);
-        m_decayIncr = 1.0 / (AUDIO_SR * decay);
-        m_releaseIncr = 1.0 / (AUDIO_SR * release);
+        m_attackIncr = 1.0f / (AUDIO_SR * attack);
+        m_decayIncr = 1.0f / (AUDIO_SR * decay);
+        m_releaseIncr = 1.0f / (AUDIO_SR * release);
     }
 
   public:
-    ADSR(bool linear) : m_attackIncr(0.1), m_decayIncr(0.1), m_sustainLevel(0.7), m_releaseIncr(0.1), m_state(State::IDLE), m_currentVal(0), m_isLinear(linear)
+    ADSR(bool linear) : m_attack(0.01f), m_decay(0.01f), m_release(0.01f), m_sustainLevel(0.7f), m_attackIncr(0), m_decayIncr(0), m_releaseIncr(0), m_currentVal(0), m_state(State::IDLE), m_isLinear(linear)
     {
         std::fill_n(m_out, AUDIO_BUFFER_SIZE, 0.0);
     };
@@ -50,7 +51,6 @@ class ADSR
         m_attack = atk;
         m_decay = dec;
         m_release = rel;
-        calcIncr(atk, dec, rel);
         m_sustainLevel = sus;
     }
 
@@ -64,6 +64,8 @@ class ADSR
 
     double *process(bool gate, float vel)
     {
+        calcIncr(m_attack, m_decay, m_release);
+        const float sustain = m_sustainLevel;
         for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
         {
 
@@ -99,9 +101,9 @@ class ADSR
 
             case State::DECAY:
                 m_currentVal -= m_decayIncr;
-                if (m_currentVal <= m_sustainLevel * vel)
+                if (m_currentVal <= sustain * vel)
                 {
-                    m_currentVal = m_sustainLevel * vel;
+                    m_currentVal = sustain * vel;
                     m_state = State::SUSTAIN;
                 }
                 break;

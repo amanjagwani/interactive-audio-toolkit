@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <cmath>
 #include "config.h"
+#include <atomic>
 
 namespace iat
 {
@@ -12,8 +13,8 @@ class Reson
 {
   private:
     float fs;
-    float fc;
-    float bandwidth;
+    std::atomic<float> fc;
+    std::atomic<float> bandwidth;
     float b1, b2, a;
     float y[2];
 
@@ -35,7 +36,6 @@ class Reson
     void setBandwidth(float bw)
     {
         bandwidth = bw;
-        calculateCoefficients();
     }
 
     void calculateCoefficients()
