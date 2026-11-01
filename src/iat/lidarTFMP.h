@@ -13,11 +13,10 @@ struct LidarTFMP : public Sensor
 {
 
     TFMPI2C tfmp;
-    const String configPath = "/miscConfig.json";
     bool isConnected;
     gpio_num_t I2C_SDA, I2C_SCL;
 
-    LidarTFMP(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false) {};
+    LidarTFMP(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false), I2C_SDA(sdaPin), I2C_SCL(sclPin) {};
 
     int begin()
     {
@@ -74,6 +73,9 @@ struct LidarTFMP : public Sensor
             }
         }
     }
+
+    const char *getType() const override { return "lidarTFMP"; }
+    int getFullScale() const override { return 1000; }
 };
 
 }

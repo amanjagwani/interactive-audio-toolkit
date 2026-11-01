@@ -53,7 +53,6 @@ inline void i2sAudioOut(const double *leftSamples, const double *rightSamples)
         intBuffer[i * 2] = (leftSamples ? leftSamples[i] : 0.0) * I2S_SCALE;
         intBuffer[(i * 2) + 1] = (rightSamples ? rightSamples[i] : 0.0) * I2S_SCALE;
     }
-    //  Serial.println(intBuffer[1]);
     size_t bytesWritten;
     i2s_channel_write(i2sTx, intBuffer, sizeof(intBuffer), &bytesWritten, portMAX_DELAY);
 }

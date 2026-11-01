@@ -26,6 +26,8 @@ class RandMod
         generateNewTarget();
     }
 
+    float getUpdateRate() const { return updateRate; }
+
     void setUpdateRate(float ur)
     {
         updateRate = ur;

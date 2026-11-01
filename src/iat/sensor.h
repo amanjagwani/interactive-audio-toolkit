@@ -2,7 +2,6 @@
 #define SENSOR_H
 #include "config.h"
 #include <Arduino.h>
-#include <FS.h>
 #include "sequencerConfig.h"
 #include "outputHandler.h"
 
@@ -55,53 +54,8 @@ struct Sensor
         return reading;
     }
 
-    virtual void saveConfig(fs::FS &fs)
-    {
-        JsonDocument doc;
-        auto configSection = doc["input"][sensorId];
-        configSection["isEnabled"] = isEnabled;
-        configSection["maxVal"] = max;
-        configSection["minVal"] = min;
-        configSection["updateInterval"] = updateInterval;
-
-        File configFile = fs.open("/inputConfig.json", FILE_WRITE);
-        if (!configFile)
-        {
-            Serial.println("Failed to open input config file for writing");
-            return;
-        }
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write input config file");
-        }
-
-        configFile.close();
-    }
-
-    virtual void loadConfig(fs::FS &fs)
-    {
-        File configFile = fs.open("/inputConfig.json", FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open input config file for reading");
-            return;
-        }
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration");
-        }
-        else
-        {
-            auto configSection = doc["input"][sensorId];
-            isEnabled = configSection["isEnabled"] | isEnabled;
-            max = configSection["maxVal"] | max;
-            min = configSection["minVal"] | min;
-        }
-        configFile.close();
-    }
+    virtual const char *getType() const { return "sensor"; }
+    virtual int getFullScale() const { return 100; }
 };
 }
 

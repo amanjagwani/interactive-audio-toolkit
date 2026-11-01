@@ -19,7 +19,6 @@ class Output
     bool seqTrig;
     unsigned long sequencerStartTime = 0;
     uint16_t counter;
-    String configPath = "/config.json";
     const char *id;
 
   public:
@@ -119,6 +118,8 @@ class Output
     }
 
     virtual ~Output() {};
+
+    virtual const char *getType() const { return "output"; }
 };
 
 }

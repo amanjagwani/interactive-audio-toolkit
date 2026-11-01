@@ -7,7 +7,6 @@
 #include "metro.h"
 #include "sequencer.h"
 #include "output.h"
-#include <FS.h>
 #include <ArduinoJson.h>
 #include "utils.h"
 
@@ -80,6 +79,13 @@ class FmSynth : public Output
         }
     }
 
+    void setLevel(float value) { level = value; }
+    float getModIndex() const { return modIndex; }
+    float getModRatio() const { return modRatio; }
+    float getLevel() const { return level; }
+    void getCarEnv(float params[4]) { carAdsr.getParams(params); }
+    void getModEnv(float params[4]) { modAdsr.getParams(params); }
+
     void setCarEnv(float atk, float dec, float sus, float rel)
     {
         carAdsr.setParams(atk, dec, sus, rel);
@@ -90,71 +96,7 @@ class FmSynth : public Output
         modAdsr.setParams(atk, dec, sus, rel);
     }
 
-    void saveConfig(fs::FS &fs)
-    {
-        JsonDocument doc;
-        auto configSection = doc["output"][id];
-        configSection["modIndex"] = modIndex.load();
-        configSection["level"] = level.load();
-        configSection["modRatio"] = modRatio.load();
-        configSection["ampAttack"] = carAdsr.m_attack.load();
-        configSection["ampDecay"] = carAdsr.m_decay.load();
-        configSection["ampSustain"] = carAdsr.m_sustainLevel.load();
-        configSection["ampRelease"] = carAdsr.m_release.load();
-        configSection["modAttack"] = modAdsr.m_attack.load();
-        configSection["modDecay"] = modAdsr.m_decay.load();
-        configSection["modSustain"] = modAdsr.m_sustainLevel.load();
-        configSection["modRelease"] = modAdsr.m_release.load();
-
-        File configFile = fs.open("/outputConfig.json", FILE_WRITE);
-        if (!configFile)
-        {
-            Serial.println("Failed to open output config file for writing");
-            return;
-        }
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write output config file");
-        }
-
-        configFile.close();
-    }
-
-    void loadConfig(fs::FS &fs)
-    {
-        File configFile = fs.open("/outputConfig.json", FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for reading: FM Synth");
-            return;
-        }
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration: FM Synth");
-        }
-        else
-        {
-            auto configSection = doc["output"][id];
-            modIndex = configSection["modIndex"] | modIndex.load();
-            modRatio = configSection["modRatio"] | modRatio.load();
-            level = configSection["level"] | level.load();
-            carAdsr.m_attack = configSection["ampAttack"] | carAdsr.m_attack.load();
-            carAdsr.m_decay = configSection["ampDecay"] | carAdsr.m_decay.load();
-            carAdsr.m_sustainLevel = configSection["ampSustain"] | carAdsr.m_sustainLevel.load();
-            carAdsr.m_release = configSection["ampRelease"] | carAdsr.m_release.load();
-            modAdsr.m_attack = configSection["modAttack"] | modAdsr.m_attack.load();
-            modAdsr.m_decay = configSection["modDecay"] | modAdsr.m_decay.load();
-            modAdsr.m_sustainLevel = configSection["modSustain"] | modAdsr.m_sustainLevel.load();
-            modAdsr.m_release = configSection["modRelease"] | modAdsr.m_release.load();
-
-            carAdsr.setParams(carAdsr.m_attack, carAdsr.m_decay, carAdsr.m_sustainLevel, carAdsr.m_release);
-            modAdsr.setParams(modAdsr.m_attack, modAdsr.m_decay, modAdsr.m_sustainLevel, modAdsr.m_release);
-        }
-        configFile.close();
-    }
+    const char *getType() const override { return "fmSynth"; }
 };
 
 }

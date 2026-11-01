@@ -2,12 +2,14 @@
 #define SEQUENCER_CONFIG_H
 
 #include <Arduino.h>
-#include <FS.h>
 #include <ArduinoJson.h>
 #include <atomic>
 
 namespace iat
 {
+
+inline std::atomic<bool> globalCooldown{false};
+inline uint32_t deviceTriggerCount = 0;
 
 struct ActivationConfig
 {
@@ -45,20 +47,29 @@ class SequencerConfig
     bool trigEnable;
     bool isLoadCell;
     const String seqId;
-    const String configPath = "/seqConfig.json";
 
     static const int MAX_TRIGGER_TIMESTAMPS = 60;
+    static const unsigned long TRIGGER_DEBOUNCE_MS = 5000;
+    static const unsigned long TRIGGER_WINDOW_MS = 60000;
     unsigned long triggerTimestamps[MAX_TRIGGER_TIMESTAMPS];
     int triggerTimestampCount = 0;
-    float triggerRate = 0.0;
-    uint32_t triggerRateHighThreshold = 10;
-    unsigned long triggerCooldownInterval = 5000;
-    unsigned long triggerInactivityThreshold = 10000;
-    bool autoPlay = false;
     unsigned long autoPlayStartTimestamp = 0;
     unsigned long lastActiveTimestamp = 0;
 
   public:
+    float triggerRate = 0.0;
+    float triggerRateHighThreshold = 10;
+    unsigned long triggerCooldownInterval = 5000;
+    unsigned long triggerInactivityThreshold = 30000;
+    int8_t trigRatePriorityLevel = 2;
+    bool enableTriggerRateProcessing = false;
+    bool enableCooldown = false;
+    bool enableAutoplay = false;
+    bool toggleAnimation = false;
+    bool autoPlay = false;
+    bool cooldownStarted = false;
+    bool cooldownEnded = false;
+
     ActivationConfig *currentActivation;
 
     SequencerConfig(const String &id)
@@ -178,14 +189,9 @@ class SequencerConfig
         trigEnable = value;
     }
 
-    String getConfigFileName(const String &seqId)
-    {
-        return "/seqConfig" + seqId + ".json";
-    }
-
     void processSensorActivation()
     {
-        if (cooldown.load())
+        if (cooldown.load() || globalCooldown.load())
         {
             sensorActivation.isActive = false;
             return;
@@ -240,47 +246,127 @@ class SequencerConfig
                     sensorActivation.startTime = 0;
                 }
             }
+            if (isWithinRange)
+            {
+                recordTrigger(currentTime);
+            }
         }
     }
 
-    void addTriggerTimestamp()
+    void recordTrigger(unsigned long timestamp)
     {
-        if (triggerTimestampCount < MAX_TRIGGER_TIMESTAMPS)
+        if (triggerTimestampCount > 0 && timestamp - triggerTimestamps[triggerTimestampCount - 1] < TRIGGER_DEBOUNCE_MS)
         {
-            triggerTimestamps[triggerTimestampCount++] = millis();
+            return;
+        }
+        if (triggerTimestampCount == MAX_TRIGGER_TIMESTAMPS)
+        {
+            memmove(triggerTimestamps, triggerTimestamps + 1, (MAX_TRIGGER_TIMESTAMPS - 1) * sizeof(unsigned long));
+            triggerTimestampCount--;
+        }
+        triggerTimestamps[triggerTimestampCount++] = timestamp;
+        lastActiveTimestamp = timestamp;
+        deviceTriggerCount++;
+    }
+
+    void startGlobalActivation(int8_t priority)
+    {
+        globalActivation.priorityLevel = priority;
+        globalActivation.startTime = 0;
+        globalActivation.isActive = true;
+    }
+
+    void processGlobalActivation()
+    {
+        if (trigEnable && globalActivation.isActive)
+        {
+            unsigned long currentTime = millis();
+
+            if (globalActivation.startTime == 0)
+            {
+                globalActivation.startTime = currentTime;
+                globalActivation.probability = 100;
+            }
+
+            unsigned long elapsedTime = currentTime - globalActivation.startTime;
+            if (elapsedTime < runTime * 1000)
+            {
+                float decrementStep = (100.0 / (runTime * 1000)) * elapsedTime;
+                globalActivation.probability = std::max(100 - decrementStep, 0.0f);
+            }
+            else
+            {
+                globalActivation.isActive = false;
+                globalActivation.startTime = 0;
+            }
+        }
+    }
+
+    bool getCooldown() const { return cooldown.load(); }
+
+    void setCooldown(bool value)
+    {
+        cooldown.store(value);
+        if (value)
+        {
+            lastActiveTimestamp = millis();
+            triggerTimestampCount = 0;
+            triggerRate = 0;
         }
     }
 
     void processTriggerRate()
     {
+        cooldownStarted = false;
+        cooldownEnded = false;
+        if (!trigEnable || !enableTriggerRateProcessing)
+        {
+            if (cooldown.load())
+            {
+                cooldown.store(false);
+                cooldownEnded = true;
+            }
+            return;
+        }
         unsigned long currentTime = millis();
-        const unsigned long windowSize = 60000;
         int newCount = 0;
         for (int i = 0; i < triggerTimestampCount; i++)
         {
-            triggerTimestamps[newCount++] = triggerTimestamps[i];
+            if (currentTime - triggerTimestamps[i] <= TRIGGER_WINDOW_MS)
+            {
+                triggerTimestamps[newCount++] = triggerTimestamps[i];
+            }
         }
         triggerTimestampCount = newCount;
         triggerRate = (float)triggerTimestampCount;
-        if (triggerRate >= triggerRateHighThreshold && !cooldown.load())
+
+        if (enableCooldown)
         {
-            cooldown.store(true);
-            lastActiveTimestamp = currentTime;
-            triggerTimestampCount = 0;
+            if (triggerRate >= triggerRateHighThreshold && !cooldown.load())
+            {
+                setCooldown(true);
+                cooldownStarted = true;
+            }
+            else if (cooldown.load() && currentTime - lastActiveTimestamp >= triggerCooldownInterval)
+            {
+                cooldown.store(false);
+                cooldownEnded = true;
+            }
         }
-        if (cooldown.load() && currentTime - lastActiveTimestamp >= triggerCooldownInterval)
+
+        if (enableAutoplay)
         {
-            cooldown.store(false);
-        }
-        if (!autoPlay && currentTime - lastActiveTimestamp >= triggerInactivityThreshold)
-        {
-            autoPlay = true;
-            autoPlayStartTimestamp = currentTime;
-        }
-        if (autoPlay && currentTime - autoPlayStartTimestamp >= runTime * 1000)
-        {
-            autoPlay = false;
-            lastActiveTimestamp = currentTime;
+            if (!autoPlay && currentTime - lastActiveTimestamp >= triggerInactivityThreshold)
+            {
+                autoPlay = true;
+                autoPlayStartTimestamp = currentTime;
+                startGlobalActivation(trigRatePriorityLevel);
+            }
+            if (autoPlay && currentTime - autoPlayStartTimestamp >= runTime * 1000UL)
+            {
+                autoPlay = false;
+                lastActiveTimestamp = currentTime;
+            }
         }
     }
 
@@ -289,9 +375,8 @@ class SequencerConfig
     {
         if (trigEnable)
         {
+            processGlobalActivation();
             processSensorActivation();
-            addTriggerTimestamp();
-            processTriggerRate();
 
             if (sensorActivation.isActive && globalActivation.isActive)
             {
@@ -331,83 +416,6 @@ class SequencerConfig
             sequencerActive.store(manualActivation.load());
             probability = 100;
         }
-    }
-
-    void saveConfig(fs::FS &fs)
-    {
-        String filePath = getConfigFileName(seqId);
-        File configFile = fs.open(filePath.c_str(), FILE_WRITE);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for writing: " + seqId);
-            return;
-        }
-
-        JsonDocument doc;
-
-        doc["runTime"] = runTime;
-        doc["threshold"] = threshold;
-        doc["trigEnable"] = trigEnable;
-        doc["subDiv"] = subDiv.load();
-        doc["mode"] = mode;
-        doc["numSteps"] = numSteps;
-        doc["thresholdRange"] = thresholdRange;
-        doc["isLoadCell"] = isLoadCell;
-        doc["sensorTrigPriority"] = sensorActivation.priorityLevel;
-
-        JsonArray jpitches = doc["pitches"].to<JsonArray>();
-        JsonArray jvelocities = doc["velocities"].to<JsonArray>();
-
-        for (int i = 0; i < 32; i++)
-        {
-            jpitches.add(this->pitches[i]);
-            jvelocities.add(this->velocities[i]);
-        }
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write to file for: " + seqId);
-        }
-
-        configFile.close();
-    }
-
-    void loadConfig(fs::FS &fs)
-    {
-        String filePath = getConfigFileName(seqId);
-        File configFile = fs.open(filePath.c_str(), FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for reading: " + seqId);
-            return;
-        }
-
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration: " + seqId);
-        }
-        else
-        {
-            runTime = doc["runTime"] | runTime;
-            threshold = doc["threshold"] | threshold;
-            trigEnable = doc["trigEnable"] | trigEnable;
-            subDiv = doc["subDiv"] | subDiv.load();
-            mode = doc["mode"] | mode;
-            numSteps = doc["numSteps"] | numSteps;
-            thresholdRange = doc["thresholdRange"] | thresholdRange;
-            isLoadCell = doc["isLoadCell"] | isLoadCell;
-            sensorActivation.priorityLevel = doc["sensorTrigPriority"] | sensorActivation.priorityLevel;
-            JsonArray jPitches = doc["pitches"];
-            JsonArray jVelocities = doc["velocities"];
-            for (size_t i = 0; i < jPitches.size(); i++)
-            {
-                pitches[i] = jPitches[i];
-                velocities[i] = jVelocities[i];
-            }
-        }
-        configFile.close();
     }
 };
 

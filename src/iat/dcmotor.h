@@ -49,6 +49,8 @@ class DCMotor : public Output
     {
         ledcWrite(MOTOR_PWM_PIN, 0);
     }
+
+    const char *getType() const override { return "dcMotor"; }
 };
 
 }

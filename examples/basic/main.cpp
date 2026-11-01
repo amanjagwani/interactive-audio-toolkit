@@ -11,13 +11,21 @@
 
 using namespace iat;
 
+#if CONFIG_IDF_TARGET_ESP32S3
+const gpio_num_t SENSOR_PIN = GPIO_NUM_1;
+const gpio_num_t LIDAR_SDA_PIN = GPIO_NUM_8;
+const gpio_num_t LIDAR_SCL_PIN = GPIO_NUM_9;
+#else
 const gpio_num_t SENSOR_PIN = GPIO_NUM_36;
+const gpio_num_t LIDAR_SDA_PIN = GPIO_NUM_21;
+const gpio_num_t LIDAR_SCL_PIN = GPIO_NUM_27;
+#endif
 const gpio_num_t STEPPER_STEP_PIN = GPIO_NUM_14;
 const gpio_num_t STEPPER_DIR_PIN = GPIO_NUM_15;
 const int BPM = 120;
 
 Adc sensor(SENSOR_PIN, "sensor1", 200);
-Lidar lidar(GPIO_NUM_21, GPIO_NUM_27, 100, "lidar1");
+Lidar lidar(LIDAR_SDA_PIN, LIDAR_SCL_PIN, 100, "lidar1");
 Metro metro(BPM);
 FmSynth synth("synth1");
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, "stepper1");
@@ -40,7 +48,7 @@ void audioTask(void *)
         SequencerConfig *config = synth.getSeqConfig();
         if (config && config->getSequencerActive())
         {
-            synth.setBpm(BPM);
+            synth.setBpm(metro.getBpm());
             buffer = synth.process(click);
         }
         i2sAudioOut(buffer, buffer);
@@ -50,6 +58,11 @@ void audioTask(void *)
 void setup()
 {
     Serial.begin(115200);
+    unsigned long serialWait = millis();
+    while (!Serial && millis() - serialWait < 3000)
+    {
+        delay(10);
+    }
     lidar.begin();
     lidar.isEnabled = true;
     sensor.isEnabled = true;
@@ -58,6 +71,7 @@ void setup()
     initSensors(sensors, sensorCount);
     initOutputs(outputs, outputCount);
     setupAllControlHandlers();
+    setupMetroControlHandlers(metro);
 
     int stepCount = 8;
 
@@ -115,22 +129,21 @@ void setup()
     xTaskCreatePinnedToCore(audioTask, "audio", 8192, nullptr, configMAX_PRIORITIES - 1, nullptr, 1);
 }
 
+bool wasActive = false;
+
 void loop()
 {
-    // read sensor values
     sensor.read();
-    uint16_t sensorReading = sensor.getReading();
-    Serial.print("ADC Sensor reading:");
-    Serial.println(sensorReading);
-
     lidar.read();
-    uint16_t lidarReading = lidar.getReading();
-    Serial.print("Lidar Reading");
-    Serial.println(lidarReading);
+    processTriggerRates();
 
     SequencerConfig *config = synth.getSeqConfig();
-    Serial.print("Sequencer Active:");
-    Serial.println(config && config->getSequencerActive());
+    bool active = config && config->getSequencerActive();
+    if (active != wasActive)
+    {
+        wasActive = active;
+        Serial.println(active ? "Sequencer active" : "Sequencer idle");
+    }
 
     // Enable dynamic triggering of sequencer from sensor thresholds
     sensorConfigLow.setTrigger();

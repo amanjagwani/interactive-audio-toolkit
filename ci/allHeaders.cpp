@@ -1,5 +1,7 @@
+#include <iat/activations.h>
 #include <iat/adc.h>
 #include <iat/adsr.h>
+#include <iat/bme.h>
 #include <iat/config.h>
 #include <iat/controlHandler.h>
 #include <iat/dcmotor.h>
@@ -29,3 +31,4 @@
 using namespace iat;
 
 template class iat::Ring<uint32_t, 8>;
+template class iat::Ring<iat::ControlMessage, 8>;

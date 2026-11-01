@@ -3,7 +3,6 @@
 
 #include "sequencerConfig.h"
 #include "output.h"
-#include <FS.h>
 
 namespace iat
 {
@@ -13,7 +12,6 @@ class OutputHandler
     SequencerConfig *seqConfig;
     Output *output;
     int lastStep;
-    const String configPath = "/seqConfig.json";
     unsigned long lastRenderTime = 0;
     const unsigned long renderInterval = 2000;
     bool stepValsSet = false;
@@ -21,6 +19,7 @@ class OutputHandler
   public:
     int8_t outputType;
     uint8_t randVal;
+    int lastSentStep = -1;
 
     const String seqId;
 
@@ -81,6 +80,8 @@ class OutputHandler
     {
         randVal = value;
     }
+
+    Output *getOutput() const { return output; }
 
     void setOutput(Output *newOut)
     {
@@ -180,58 +181,6 @@ class OutputHandler
             return 0;
         }
         return output->getStep();
-    }
-
-    String getHandlerConfigFileName(const String &seqId)
-    {
-        return "/handlerConfig" + seqId + ".json";
-    }
-
-    void loadConfig(fs::FS &fs)
-    {
-        String filePath = getHandlerConfigFileName(seqId);
-        File configFile = fs.open(filePath.c_str(), FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for reading: " + seqId);
-            return;
-        }
-
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration: " + seqId);
-        }
-        else
-        {
-            outputType = doc["outputType"] | outputType;
-            randVal = doc["randVal"] | randVal;
-        }
-        configFile.close();
-    }
-
-    void saveConfig(fs::FS &fs)
-    {
-        String filePath = getHandlerConfigFileName(seqId);
-        File configFile = fs.open(filePath.c_str(), FILE_WRITE);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for writing: " + seqId);
-            return;
-        }
-
-        JsonDocument doc;
-
-        doc["outputType"] = outputType;
-        doc["randVal"] = randVal;
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write to file for: " + seqId);
-        }
-
-        configFile.close();
     }
 };
 

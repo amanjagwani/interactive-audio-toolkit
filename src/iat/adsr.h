@@ -122,7 +122,6 @@ class ADSR
                 break;
             }
             m_out[i] = m_currentVal;
-            // Serial.println(m_currentVal);
         }
         return m_out;
     }

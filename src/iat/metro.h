@@ -2,7 +2,6 @@
 #define METRO_H
 
 #include <Arduino.h>
-#include <FS.h>
 #include <ArduinoJson.h>
 #include <atomic>
 
@@ -69,48 +68,6 @@ class Metro
     bool getStatus()
     {
         return isRunning;
-    }
-    void saveConfig(fs::FS &fs)
-    {
-        JsonDocument doc;
-        auto configSection = doc["metro"];
-        configSection["bpm"] = bpm.load();
-
-        File configFile = fs.open("/metroConfig.json", FILE_WRITE);
-        if (!configFile)
-        {
-            Serial.println("Failed to open metro config file for writing");
-            return;
-        }
-
-        if (serializeJson(doc, configFile) == 0)
-        {
-            Serial.println("Failed to write metro config file");
-        }
-
-        configFile.close();
-    }
-
-    void loadConfig(fs::FS &fs)
-    {
-        File configFile = fs.open("/metroConfig.json", FILE_READ);
-        if (!configFile)
-        {
-            Serial.println("Failed to open config file for reading: metro");
-            return;
-        }
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, configFile);
-        if (error)
-        {
-            Serial.println("Failed to read file, using default configuration: metro");
-        }
-        else
-        {
-            auto configSection = doc["metro"];
-            bpm = configSection["bpm"] | bpm.load();
-        }
-        configFile.close();
     }
 };
 

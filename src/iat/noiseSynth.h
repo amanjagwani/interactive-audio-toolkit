@@ -33,6 +33,11 @@ class NoiseSynth : public Output
     void setModDepth(float depth) { modDepth = depth; }
     void setUpdateRate(float rate) { randMod.setUpdateRate(rate); }
     float getResonFreq() { return reson.getFc(); };
+    float getNoiseAmp() const { return noise.getAmp(); }
+    float getBandwidth() const { return reson.getBandwidth(); }
+    float getModDepth() const { return modDepth; }
+    float getBaseFreq() const { return frequency; }
+    float getUpdateRate() const { return randMod.getUpdateRate(); }
 
     const float *process()
     {
@@ -49,6 +54,8 @@ class NoiseSynth : public Output
 
         return outputBuffer;
     }
+
+    const char *getType() const override { return "noiseSynth"; }
 };
 
 }

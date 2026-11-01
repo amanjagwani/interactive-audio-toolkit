@@ -52,6 +52,9 @@ struct Sonar : public Sensor
             }
         }
     }
+
+    const char *getType() const override { return "sonar"; }
+    int getFullScale() const override { return 8000; }
 };
 
 }

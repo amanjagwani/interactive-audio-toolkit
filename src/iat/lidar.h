@@ -20,11 +20,10 @@ struct Lidar : public Sensor
 
     SFEVL53L1X distanceSensor;
     Mode mode;
-    const String configPath = "/miscConfig.json";
     bool isConnected;
     gpio_num_t I2C_SDA, I2C_SCL;
 
-    Lidar(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false), mode(Mode::LONG) {};
+    Lidar(gpio_num_t sdaPin, gpio_num_t sclPin, unsigned long updatePeriod, const String id) : Sensor(updatePeriod, id, false), mode(Mode::LONG), I2C_SDA(sdaPin), I2C_SCL(sclPin) {};
 
     int begin()
     {
@@ -61,7 +60,7 @@ struct Lidar : public Sensor
 
     void read()
     {
-        if (isEnabled)
+        if (isEnabled && isConnected)
         {
             if (distanceSensor.checkForDataReady())
             {
@@ -94,6 +93,9 @@ struct Lidar : public Sensor
             }
         }
     }
+
+    const char *getType() const override { return "lidar"; }
+    int getFullScale() const override { return 4000; }
 };
 
 }

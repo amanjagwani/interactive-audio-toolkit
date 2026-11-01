@@ -38,7 +38,6 @@ class Stepper : public Output
             directionFlag = !directionFlag;
 
             float newFreq = midiNoteToFrequency(sequencer.getCurrentPitch());
-            // newFreq *= directionFlag ? 1 : -1;
 
             if (newFreq != freq)
             {
@@ -48,6 +47,8 @@ class Stepper : public Output
             stepper.runSpeed();
         }
     }
+
+    const char *getType() const override { return "stepper"; }
 };
 
 }

@@ -14,9 +14,7 @@ struct LoadCell : public Sensor
     int32_t prevReading;
     int32_t tareValue;
     unsigned long lastUpdate;
-    int id; // use 1 or 2
-
-    const String configPath = "/miscConfig.json";
+    int id;
 
     LoadCell(gpio_num_t doutPin, gpio_num_t sckPin, int idNum,
              unsigned long updatePeriod)
@@ -96,6 +94,9 @@ struct LoadCell : public Sensor
         tareValue = 0;
         Serial.println("Tare value cleared.");
     }
+
+    const char *getType() const override { return "loadcell"; }
+    int getFullScale() const override { return 10000; }
 };
 
 }

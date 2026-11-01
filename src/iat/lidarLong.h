@@ -61,6 +61,9 @@ class LidarLong : public Sensor
 #endif
         return strength;
     }
+
+    const char *getType() const override { return "lidarLong"; }
+    int getFullScale() const override { return 1200; }
 };
 
 }

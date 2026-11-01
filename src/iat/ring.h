@@ -17,7 +17,7 @@ class Ring
     std::atomic<uint32_t> readPtr{0};
     std::atomic<uint32_t> overflow{0};
 
-public:
+  public:
     bool write(const T &msg)
     {
         uint32_t w = writePtr.load(std::memory_order_relaxed);

@@ -26,6 +26,7 @@ class Noise
     ~Noise() {};
 
     inline void setAmp(float a) { amp = a; }
+    float getAmp() const { return amp; }
 
     const float *process()
     {

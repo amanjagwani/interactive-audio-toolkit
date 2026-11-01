@@ -11,7 +11,6 @@ struct Adc : public Sensor
 {
     const gpio_num_t pin;
     unsigned long lastUpdate;
-    const String configPath = "/miscConfig.json";
 
     Adc(const gpio_num_t pinNum, const char *idNum, unsigned long updatePeriod) : Sensor(updatePeriod, idNum, false), pin(pinNum), lastUpdate(0)
     {
@@ -54,6 +53,9 @@ struct Adc : public Sensor
             }
         }
     }
+
+    const char *getType() const override { return "adc"; }
+    int getFullScale() const override { return 4095; }
 };
 }
 

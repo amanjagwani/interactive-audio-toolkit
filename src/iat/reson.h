@@ -27,6 +27,7 @@ class Reson
     }
 
     float getFc() { return fc; };
+    float getBandwidth() const { return bandwidth; }
 
     void setFrequency(float centerFreq)
     {

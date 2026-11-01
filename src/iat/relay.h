@@ -54,6 +54,8 @@ class Relay : public Output
             digitalWrite(relayPin, relayState);
         }
     }
+
+    const char *getType() const override { return "relay"; }
 };
 
 }
